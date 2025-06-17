@@ -22,17 +22,3 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 }
 ?>
 
-<!-- Simple Signup Form -->
-<!DOCTYPE html>
-<html>
-<head><title>Sign Up</title></head>
-<body>
-  <h2>Sign Up</h2>
-  <form method="POST">
-    Username: <input type="text" name="username" required><br><br>
-    Password: <input type="password" name="password" required><br><br>
-    <button type="submit">Sign Up</button>
-  </form>
-  <p>Already have an account? <a href="login.html">Login here</a></p>
-</body>
-</html>
