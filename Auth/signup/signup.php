@@ -1,24 +1,54 @@
 <?php
-include("connect.php");
+session_start();
 
+// Connect to MySQL
+$conn = mysqli_connect("localhost", "root", "", "printcity");
+
+// Check connection
+if (!$conn) {
+    die("Connection failed: " . mysqli_connect_error());
+}
+
+// Handle POST request
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    $username = $_POST['username'];
-    $password = md5($_POST['password']);  // Use bcrypt in real apps
+    $username = isset($_POST["username"]) ? trim($_POST["username"]) : "";
+    $password = isset($_POST["password"]) ? trim($_POST["password"]) : "";
 
-    // Check if user exists
-    $check = "SELECT * FROM users WHERE username='$username'";
-    $res = $conn->query($check);
+    // Validate inputs
+    if (empty($username) || empty($password)) {
+        echo "<script>alert('Please fill in both username and password.'); window.location.href='signup.html';</script>";
+        exit();
+    }
+
+    // Hash password
+    $hashed_password = password_hash($password, PASSWORD_DEFAULT);
+
+    // Check if username already exists
+    $stmt = $conn->prepare("SELECT * FROM users WHERE username = ?");
+    $stmt->bind_param("s", $username);
+    $stmt->execute();
+    $res = $stmt->get_result();
 
     if ($res->num_rows > 0) {
-        echo "<script>alert('Username already taken!'); window.location.href='signup.php';</script>";
+        echo "<script>alert('Username already taken!'); window.location.href='signup.html';</script>";
     } else {
-        $sql = "INSERT INTO users (username, password) VALUES ('$username', '$password')";
-        if ($conn->query($sql)) {
-            echo "<script>alert('Registration successful! Please log in.'); window.location.href='login.html';</script>";
-        } else {
-            echo "Error: " . $conn->error;
-        }
-    }
-}
-?>
+        // Insert new user
+        $insert = $conn->prepare("INSERT INTO users (username, password, created_at) VALUES (?, ?, NOW())");
+        $insert->bind_param("ss", $username, $hashed_password);
 
+        if ($insert->execute()) {
+            $_SESSION["username"] = $username;
+            header("Location: ../../User/HomePage/index.html");
+            exit();
+        } else {
+            echo "Error: " . $insert->error;
+        }
+
+        $insert->close();
+    }
+
+    $stmt->close();
+}
+
+$conn->close();
+?>
