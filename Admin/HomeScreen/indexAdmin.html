@@ -5,54 +5,31 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Admin Dashboard</title>
   <link rel="stylesheet" href="indexAdmin.css" />
-  <script src="script.js" defer></script>
 </head>
 <body>
-  <div class="dashboard-container">
-    <!-- Sidebar -->
+  <div class="container">
     <aside class="sidebar">
-      <h2 class="logo">PrintCity</h2>
+      <h2>Admin Panel</h2>
       <nav>
         <ul>
-          
-          <li><a href="#">Users</a></li>
-          <li><a href="#">Orders</a></li>
-          <li><a href="../Products/product.php">Products</a></li>
-          <li><a href="#">Templates</a></li>
+          <li><a href="dashboard.html">Dashboard</a></li>
+          <li><a href="users.html">Users</a></li>
+          <li><a href="settings.html">Settings</a></li>
         </ul>
       </nav>
     </aside>
 
-    <!-- Main -->
     <main class="main-content">
-      <header class="header">
-        
-        <div class="user-info">
-          <span>Admin</span>
-           <img src="../imgs/logo/printcitylogo.png" alt="PrintCity Logo" class="user-avatar"  />
-
-        </div>
+      <header>
+        <button id="toggleBtn">☰</button>
+        <h1>Welcome, Admin</h1>
       </header>
-
-      <section class="cards">
-        <div class="card">
-          <h3>Users</h3>
-          <p>1,204</p>
-        </div>
-        <div class="card">
-          <h3>Orders</h3>
-          <p>875</p>
-        </div>
-        <div class="card">
-          <h3>Revenue</h3>
-          <p>₹92,500</p>
-        </div>
-        <div class="card">
-          <h3>Products</h3>
-          <p>320</p>
-        </div>
+      <section>
+        <p>This is your main page. Select a section from the sidebar.</p>
       </section>
     </main>
   </div>
+
+  <script src="script.js"></script>
 </body>
 </html>
