@@ -13,22 +13,31 @@
 <div class="nav">
   <nav>
     <ul>
-      <li><a href="#home">Home</a></li>
-      <li><a href="#services">Services</a></li>
-      <li><a href="#about">About Us</a></li>
-      <li><a href="#contact">Contact</a></li>
+      
+      <li><a href="#products">Products</a></li>
+      <li><a href="#custom">Custom</a></li>
+      <li><a href="../myorder/myorder.php">My Orders</a></li>
+      <li><a href="#aboutus">About Us</a></li>
     </ul>
   </nav>
 </div>
-  </header>
+   </header>
+
+    
+
   <div class="starter-animation">
-    <div class="logo">
-      <img src="../../assets/logo.png" alt="PrintCity Logo" />
-    </div>
-    <div class="text">
-      <h1>Welcome to PrintCity</h1>
-      <p>Your one-stop destination for all printing needs</p>
-    </div>
+    <div class="logo-text" id="fade-text">
+    Initializing PrintCity...
+   </div>
+   <div class="text" style="opacity: 0;">
+    <h1>Welcome to PrintCity</h1>
+    <p>Your one-stop destination for all printing needs</p>
+   </div>
+   <div class="logo">
+    <img src="../../assets/logo.png" alt="PrintCity Logo" />
+  </div>
+
+
     
 
  <div class="stack-area">
@@ -63,6 +72,10 @@
         </div>
       </div>
     </div>
+
+ 
+<?php include("../ProductPage/productpage.php"); ?>
+
 
 
 

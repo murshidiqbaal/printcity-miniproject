@@ -37,3 +37,18 @@
         }
         rotateCards();
       });
+
+      document.addEventListener("DOMContentLoaded", () => {
+  const typeText = document.getElementById("type-text");
+  const message = "Initializing PrintCity...";
+  let index = 0;
+
+  const typing = setInterval(() => {
+    if (index < message.length) {
+      typeText.textContent += message[index];
+      index++;
+    } else {
+      clearInterval(typing);
+    }
+  }, 100);
+});

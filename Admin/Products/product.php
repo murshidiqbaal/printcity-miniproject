@@ -1,132 +1,181 @@
-<?php
-$conn = mysqli_connect("localhost", "root", "", "printcity");
-
-if (!$conn) {
-    die("Connection failed: " . mysqli_connect_error());
-}
-
-// ✅ Handle product insertion
-if ($_SERVER["REQUEST_METHOD"] === "POST") {
-    $name = trim($_POST["name"]);
-    $category = trim($_POST["category"]);
-    $price = $_POST["price"];
-    $description = trim($_POST["description"]);
-
-    if (isset($_FILES["image"]) && $_FILES["image"]["error"] === 0) {
-        $upload_dir = "../../assets/";
-        $image_name = basename($_FILES["image"]["name"]);
-        $target_path = $upload_dir . $image_name;
-        $db_image_path = "assets/" . $image_name;
-
-        if (move_uploaded_file($_FILES["image"]["tmp_name"], $target_path)) {
-            $stmt = $conn->prepare("INSERT INTO products (name, category, image_path, price, description) VALUES (?, ?, ?, ?, ?)");
-            $stmt->bind_param("sssds", $name, $category, $db_image_path, $price, $description);
-            $stmt->execute();
-            $stmt->close();
-        }
-    }
-}
-
-// ✅ Fetch all products
-$products = [];
-$result = $conn->query("SELECT * FROM products ORDER BY created_at DESC");
-if ($result && $result->num_rows > 0) {
-    while ($row = $result->fetch_assoc()) {
-        $products[] = $row;
-    }
-}
-$conn->close();
-?>
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Admin - Add & View Products</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Product Page</title>
   <style>
     body {
-      font-family: Arial;
+      font-family: Arial, sans-serif;
+      margin: 0;
       padding: 20px;
-      background-color: #f0f0f0;
-    }
-    form {
-      background: #fff;
-      padding: 20px;
-      border-radius: 8px;
-      width: 300px;
-      margin-bottom: 30px;
-    }
-    input, textarea {
-      width: 100%;
-      margin-bottom: 10px;
-      padding: 8px;
-    }
-    button {
-      padding: 10px;
-      background: green;
-      color: white;
-      border: none;
     }
 
-    .product-grid {
+    .floating-button {
+      position: fixed;
+      bottom: 30px;
+      right: 30px;
+      background-color: #28a745;
+      color: white;
+      border: none;
+      border-radius: 50%;
+      width: 60px;
+      height: 60px;
+      font-size: 30px;
+      cursor: pointer;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+    }
+
+    .popup-form {
+      display: none;
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: white;
+      padding: 20px;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+      border-radius: 10px;
+      z-index: 1000;
+    }
+
+    .popup-form input, .popup-form textarea {
+      display: block;
+      margin-bottom: 10px;
+      padding: 8px;
+      width: 100%;
+    }
+
+    .popup-form button {
+      background-color: #007bff;
+      color: white;
+      padding: 8px 12px;
+      border: none;
+      cursor: pointer;
+    }
+
+    .overlay {
+      display: none;
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: rgba(0,0,0,0.4);
+      z-index: 999;
+    }
+
+    .product-list {
       display: flex;
       flex-wrap: wrap;
       gap: 20px;
+      margin-top: 20px;
     }
 
     .product-card {
-      background: #fff;
+      border: 1px solid #ddd;
+      border-radius: 10px;
       padding: 15px;
-      border-radius: 8px;
-      width: 220px;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+      width: 250px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
     }
 
     .product-card img {
       width: 100%;
-      height: 150px;
+      height: 180px;
       object-fit: cover;
-      border-radius: 5px;
+      border-radius: 8px;
     }
 
-    .product-card h3 {
+    .product-card h4 {
       margin: 10px 0 5px;
     }
 
     .product-card p {
+      margin: 0;
       font-size: 14px;
-      color: #555;
-    }
-
-    .product-price {
-      font-weight: bold;
-      color: green;
     }
   </style>
 </head>
 <body>
 
-<h2>Add New Product</h2>
-<form action="product.php" method="POST" enctype="multipart/form-data">
-  <input type="text" name="name" placeholder="Product Name" required>
-  <input type="text" name="category" placeholder="Category" required>
-  <input type="number" name="price" step="0.01" placeholder="Price" required>
-  <textarea name="description" placeholder="Description"></textarea>
-  <input type="file" name="image" accept="image/*" required>
-  <button type="submit">Add Product</button>
-</form>
+  <h2>Product Page</h2>
 
-<h2>All Products</h2>
-<div class="product-grid">
-  <?php foreach ($products as $product): ?>
-    <div class="product-card">
-      <img src="../../<?= htmlspecialchars($product['image_path']) ?>" alt="Product">
-      <h3><?= htmlspecialchars($product['name']) ?></h3>
-      <p><?= htmlspecialchars($product['description']) ?></p>
-      <span class="product-price">₹<?= number_format($product['price'], 2) ?></span>
-    </div>
-  <?php endforeach; ?>
+  <!-- Floating Add Button -->
+  <button class="floating-button" onclick="openForm()">+</button>
+
+  <!-- Overlay -->
+  <div class="overlay" id="overlay" onclick="closeForm()"></div>
+
+  <!-- Popup Form -->
+  <div class="popup-form" id="popupForm">
+    <form action="productlog.php" method="POST" enctype="multipart/form-data">
+      <h3>Add Product</h3>
+      <input type="text" name="name" placeholder="Product Name" required />
+      <input type="text" name="category" placeholder="Category" required />
+      <input type="file" name="image" accept="image/*" required />
+      <input type="number" step="0.01" name="price" placeholder="Price" />
+      <textarea name="description" placeholder="Description"></textarea>
+      <button type="submit">Add Product</button>
+    </form>
+  </div>
+<!-- Product List Section -->
+<div class="product-list">
+  <?php
+    // MySQL connection
+    $conn = new mysqli('localhost', 'root', '', 'printcity');
+
+    if ($conn->connect_error) {
+      die("Connection failed: " . $conn->connect_error);
+    }
+
+    $sql = "SELECT * FROM products ORDER BY created_at DESC";
+    $result = $conn->query($sql);
+
+    if ($result->num_rows > 0) {
+      while ($row = $result->fetch_assoc()) {
+        echo '<div class="product-card">';
+        if (!empty($row['image_path']) && file_exists($row['image_path'])) {
+          echo '<img src="' . $row['image_path'] . '" alt="Product Image">';
+        } else {
+          echo '<img src="placeholder.jpg" alt="No image">';
+        }
+        echo '<h4>' . htmlspecialchars($row['name']) . '</h4>';
+        echo '<p><strong>Category:</strong> ' . htmlspecialchars($row['category']) . '</p>';
+        echo '<p><strong>Price:</strong> ₹' . number_format($row['price'], 2) . '</p>';
+        echo '<p>' . htmlspecialchars($row['description']) . '</p>';
+
+        // 🔧 Add Edit & Delete Buttons
+        echo '<form action="edit.php" method="GET" style="display:inline-block; margin-top:10px; margin-right:10px;">
+                <input type="hidden" name="id" value="' . $row['product_id'] . '">
+                <button type="submit">Edit</button>
+              </form>';
+
+        echo '<form action="delete.php" method="POST" style="display:inline-block; margin-top:10px;" onsubmit="return confirm(\'Are you sure?\')">
+                <input type="hidden" name="id" value="' . $row['product_id'] . '">
+                <button type="submit" style="background-color:red; color:white;">Delete</button>
+              </form>';
+
+        echo '</div>';
+      }
+    } else {
+      echo "<p>No products available.</p>";
+    }
+
+    $conn->close();
+  ?>
 </div>
+
+
+  <script>
+    function openForm() {
+      document.getElementById('popupForm').style.display = 'block';
+      document.getElementById('overlay').style.display = 'block';
+    }
+
+    function closeForm() {
+      document.getElementById('popupForm').style.display = 'none';
+      document.getElementById('overlay').style.display = 'none';
+    }
+  </script>
 
 </body>
 </html>

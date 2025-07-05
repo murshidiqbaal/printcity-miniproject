@@ -1,9 +1,21 @@
+/* google fonts */
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
+
+:root{
+  --primary-color: rgb(57, 181, 198);
+  --secondary-color: rgb(233, 233, 229);
+  --text-color: rgb(0, 0, 0); 
+  --accent-color: rgb(196, 196, 8);
+}
 
  body {
         width: 100%;
         height: fit-content;
         margin: 0;
         padding: 0;
+        font-family: 'Inter', sans-serif;
+        background-color: #000; /* or your background image/color */
+        color: white;
       }
       .stack-area {
         width: 100%;
@@ -136,39 +148,86 @@
        padding: 0;
        margin: 0;
        display: flex;
-        gap: 30px;
+        /* gap: 10px; */
    }
 
    nav li {
      
        list-style: none;
-       font-family: poppins;
+       font-family: Impact, Haettenschweiler, 'Arial Narrow Bold', sans-serif;
        font-size: 14px;
        margin: 0 20px;
        cursor: pointer;
        color: white;
-       background: rgb(233, 233, 229);
+      
         padding: 10px 20px;
         border-radius: 10px;
    }
+ 
+
+    nav li a {
+        text-decoration: none;
+        color: gray;
+    }
     nav li:hover {
-        background: rgb(57, 181, 198);
-        color: black;
+        color: white;
+    }
+
+    nav li:hover a {
+        color: white;
+    }
+    
+    nav li.active {
+        background: var(--primary-color);
+        color: white;
+    }
+    nav li.active a {
+        color: white;
+    }
+    @keyframes logoAnimation {
+      0% {
+        transform: rotate(0deg);
+      }
+      50% {
+        transform: rotate(180deg);
+      }
+      100% {
+        transform: rotate(360deg);
+      }
+    }
+    @keyframes fadeIn {
+      0% {
+        opacity: 0;
+      }
+      100% {
+        opacity: 1;
+      }
+    }
+    @keyframes slideIn {
+      0% {
+        transform: translateY(100%);
+      }
+      100% {
+        transform: translateY(0);
+      }
     }
 
     .starter-animation{
       background: black;
       width: 100%;
       height: 120vh;
-    
+     text-align: center;
+     margin-top: 100px;
+     position: relative;
 
     }
 
     .logo{
       width: 100px;
-      height: 100vh;
+      height: 71vh;
       position: relative;
       left: 50%;
+      bottom: 20%;
       transform: translateX(-50%);
       display: flex;
       align-items: center;
@@ -180,4 +239,38 @@
       height: 100px;
       border-radius: 50%;
       animation: logoAnimation 2s ease-in-out infinite;
+      width: 120px;
+      opacity: 0;
+      animation: fadeInLogo 2s ease-in-out forwards;
     }
+    
+.logo-text {
+  font-family: 'Inter', sans-serif;
+  font-size: 1.5rem;
+  color: white;
+  margin-top: 10px;
+  opacity: 0;
+  animation: fadeInText 2s ease-in-out 2.5s forwards;
+}
+
+    
+.text {
+  opacity: 0;
+  margin-top: 20px;
+  animation: fadeInMainText 2s ease-in-out 4.5s forwards;
+  color: white;
+}
+
+
+@keyframes fadeInLogo {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes fadeInText {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+  @keyframes fadeInMainText {
+  to { opacity: 1; }
+} 

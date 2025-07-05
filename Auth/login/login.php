@@ -23,7 +23,14 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         // Check if password matches
         if (password_verify($password, $row['password'])) {
             $_SESSION["username"] = $username;
-            header("Location: ../../User/HomePage/index.html");
+            $_SESSION["role"] = $row['role']; // store role in session
+
+            // Redirect based on role
+            if ($row['role'] === 'admin') {
+                header("Location: ../../Admin/HomeScreen/indexAdmin.html");
+            } else {
+                header("Location: ../../User/HomePage/index.php");
+            }
             exit();
         } else {
             echo "<script>alert('Incorrect password'); window.location.href='login.html';</script>";

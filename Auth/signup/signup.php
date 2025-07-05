@@ -32,13 +32,14 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     if ($res->num_rows > 0) {
         echo "<script>alert('Username already taken!'); window.location.href='signup.html';</script>";
     } else {
-        // Insert new user
-        $insert = $conn->prepare("INSERT INTO users (username, password, created_at) VALUES (?, ?, NOW())");
+        // Insert new user with role 'user'
+        $insert = $conn->prepare("INSERT INTO users (username, password, role, created_at) VALUES (?, ?, 'user', NOW())");
         $insert->bind_param("ss", $username, $hashed_password);
 
         if ($insert->execute()) {
             $_SESSION["username"] = $username;
-            header("Location: ../../User/HomePage/index.html");
+            $_SESSION["role"] = 'user';
+            header("Location: ../../User/HomePage/index.php");
             exit();
         } else {
             echo "Error: " . $insert->error;
