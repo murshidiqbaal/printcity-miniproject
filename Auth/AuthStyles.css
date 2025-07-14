@@ -98,3 +98,10 @@ button:hover{
   color: #030303;
   text-decoration: none;
 }
+/* span text align */
+h1 span {
+  display: inline-block;
+  text-align: center;
+  letter-spacing: 2px;
+  font-size: 2rem;
+}

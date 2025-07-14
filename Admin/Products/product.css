@@ -84,3 +84,18 @@ body {
 .product-card form button:hover {
   opacity: 0.9;
 }
+.popup-form{
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 10px;
+  margin: 10px;
+
+  border-radius: 10px;
+}

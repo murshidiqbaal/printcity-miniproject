@@ -6,7 +6,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>PrintCity - Your Online Printshop</title>
   <link rel="stylesheet" href="IndexStyles.css"/>
-  <script src="index.js" defer></script>
+  <script 
+  src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js"
+  src="index.js" defer>
+  </script>
 </head>
 <body>
   <header>
@@ -30,7 +33,20 @@
     Initializing PrintCity...
    </div>
    <div class="text" style="opacity: 0;">
-    <h1>Welcome to PrintCity</h1>
+  <h1 class="large grid centered square-grid text-2xl">
+  <span>P</span>
+  <span>R</span>
+  <span>I</span>
+  <span>N</span>
+  <span>T</span>
+  <span>&nbsp;</span>
+  <span>C</span>
+  <span>I</span>
+  <span>T</span>
+  <span>Y</span>
+</h1>
+
+
     <p>Your one-stop destination for all printing needs</p>
    </div>
    <div class="logo">

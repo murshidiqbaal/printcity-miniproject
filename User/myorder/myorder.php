@@ -1,14 +1,34 @@
-<!-- my_orders.php -->
 <?php
+session_start();
 $conn = mysqli_connect("localhost", "root", "", "printcity");
 
 if (!$conn) {
     die("Connection failed: " . mysqli_connect_error());
 }
 
-// This example filters by customer name from GET (can be session-based instead)
-$customer_name = isset($_GET['name']) ? mysqli_real_escape_string($conn, $_GET['name']) : '';
+// ✅ 1. Check login session
+if (!isset($_SESSION['username'])) {
+    echo "<p>Please <a href='login.php'>login</a> to view your orders.</p>";
+    exit;
+}
 
+$username = mysqli_real_escape_string($conn, $_SESSION['username']);
+
+// ✅ 2. Fetch user data from users table
+$userQuery = "SELECT * FROM users WHERE username = '$username'";
+$userResult = mysqli_query($conn, $userQuery);
+$user = mysqli_fetch_assoc($userResult);
+
+// ✅ 3. Validate user
+if (!$user) {
+    echo "<p>User not found in database.</p>";
+    exit;
+}
+
+// ✅ 4. Use correct column (adjust 'name' if it's different)
+$customer_name = $user['name'] ?? $user['username']; // fallback to username if name is not present
+
+// ✅ 5. Fetch orders
 $sql = "SELECT o.*, p.name AS product_name, p.image_path 
         FROM orders o
         JOIN products p ON o.product_id = p.product_id
@@ -60,12 +80,12 @@ $result = mysqli_query($conn, $sql);
 </head>
 <body>
 
-<h2>📦 My Orders</h2>
+<h2>📦 My Orders (<?= htmlspecialchars($customer_name ?? 'Guest') ?>)</h2>
 
 <?php if (mysqli_num_rows($result) > 0): ?>
   <?php while ($order = mysqli_fetch_assoc($result)): ?>
     <div class="order-card">
-      <img src="/miniproject/<?= htmlspecialchars($order['image_path']) ?>" alt="<?= htmlspecialchars($order['product_name']) ?>">
+<img src="/miniproject/Admin/Products/<?= htmlspecialchars($order['image_path']) ?>" style="width:60px; height:60px; object-fit:cover; border-radius:8px;" alt="<?= htmlspecialchars($order['product_name']) ?>">
       <div class="info">
         <h3><?= htmlspecialchars($order['product_name']) ?></h3>
         <p><strong>Quantity:</strong> <?= $order['quantity'] ?></p>

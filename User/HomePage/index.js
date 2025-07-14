@@ -1,5 +1,16 @@
 
 
+anime({
+  targets: 'h1 span',  // Animate each letter in <span>
+  translateY: [-20, 0],
+  opacity: [0, 1],
+  delay: anime.stagger(100), // delay by 100ms for each span
+  duration: 1000,
+  easing: 'easeOutExpo',
+  loop: true,
+  direction: 'alternate'
+});
+
  let cards = document.querySelectorAll(".card");
 
       let stackArea = document.querySelector(".stack-area");

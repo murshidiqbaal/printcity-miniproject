@@ -62,7 +62,7 @@ if (isset($_GET['product_id'])) {
 
 <div class="order-box">
   <h2>Order: <?= htmlspecialchars($product['name']) ?></h2>
-  <img src="/miniproject/<?= htmlspecialchars($product['image_path']) ?>" alt="<?= htmlspecialchars($product['name']) ?>">
+  <img src="miniproject/Admin/Products/<?= htmlspecialchars($product['image_path']) ?>" alt="<?= htmlspecialchars($product['name']) ?>">
   <p><strong>Category:</strong> <?= htmlspecialchars($product['category']) ?></p>
   <p><strong>Price:</strong> ₹<?= number_format($product['price'], 2) ?></p>
 
