@@ -39,6 +39,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         if ($insert->execute()) {
             $_SESSION["username"] = $username;
             $_SESSION["role"] = 'user';
+            $_SESSION['user_id'] = $insert->insert_id;
+            $_SESSION['username'] = $username;
             header("Location: ../../User/HomePage/index.php");
             exit();
         } else {

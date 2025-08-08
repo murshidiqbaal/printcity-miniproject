@@ -24,6 +24,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         if (password_verify($password, $row['password'])) {
             $_SESSION["username"] = $username;
             $_SESSION["role"] = $row['role']; // store role in session
+            $_SESSION['user_id'] = $row['id'];
+            $_SESSION['username'] = $row['username'];
 
             // Redirect based on role
             if ($row['role'] === 'admin') {

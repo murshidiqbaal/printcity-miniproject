@@ -17,6 +17,7 @@
       <li><a href="#products">Products</a></li>
       <li><a href="#custom">Custom</a></li>
       <li><a href="../myorder/myorder.php">My Orders</a></li>
+      <li><a href="../contactus/contactus.php">Contact Us</a></li>
       <li><a href="#aboutus">About Us</a></li>
     </ul>
   </nav>
@@ -27,7 +28,7 @@
 
   <div class="starter-animation">
     <div class="logo-text" id="fade-text">
-    Initializing PrintCity...
+    Here You Go...
    </div>
    <div class="text" style="opacity: 0;">
     <h1>Welcome to PrintCity</h1>
@@ -73,9 +74,9 @@
       </div>
     </div>
 
- 
+ <div>
 <?php include("../ProductPage/productpage.php"); ?>
-
+</div>
 
 
 

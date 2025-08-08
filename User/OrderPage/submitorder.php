@@ -16,7 +16,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
     if (mysqli_query($conn, $sql)) {
         echo "<p>✅ Order placed successfully!</p>";
-        echo "<a href='../ProductPage/productpage.php'>← Back to Products</a>";
+        header("Location: ../myorder/myorder.php?name=" . urlencode($name));
     } else {
         echo "Error: " . mysqli_error($conn);
     }
