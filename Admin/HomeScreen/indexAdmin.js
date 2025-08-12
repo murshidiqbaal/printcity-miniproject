@@ -15,42 +15,6 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   });
 });
-  // function loadPage(page) {
-  //     let content = '';
-  //     switch (page) {
-  //       case 'dashboard':
-  //         content = `
-  //           <h1>Dashboard</h1>
-  //           <p>Welcome to your dashboard overview.</p>
-  //         `;
-  //         break;
-  //       case 'products':
-  //         content = `
-  //           <h1>Products</h1>
-  //           <p>Here you can manage all your products.</p>
-  //         `;
-  //         break;
-  //       case 'orders':
-  //         content = `
-  //           <h1>Orders</h1>
-  //           <p>View and manage all customer orders here.</p>
-  //         `;
-  //         break;
-  //       case 'customers':
-  //         content = `
-  //           <h1>Customers</h1>
-  //           <p>Manage customer data and relationships here.</p>
-  //         `;
-  //         break;
-  //       case 'settings':
-  //         content = `
-  //           <h1>Settings</h1>
-  //           <p>Change your system preferences and configurations here.</p>
-  //         `;
-  //         break;
-  //     }
-  //     document.getElementById('mainContent').innerHTML = content;
-  //   }
   
     // Switch sections without page reload
     function showSection(sectionId) {

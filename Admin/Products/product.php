@@ -4,11 +4,26 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Product Page</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
   <style>
-    body {
-      font-family: Arial, sans-serif;
+    * {
       margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    body {
+      background-color: #f5f7fa;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
       padding: 20px;
+    }
+
+    h2 {
+      margin-bottom: 20px;
+      color: #333;
     }
 
     .floating-button {
@@ -24,6 +39,20 @@
       font-size: 30px;
       cursor: pointer;
       box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+      transition: background-color 0.3s;
+    }
+
+    .floating-button:hover {
+      background-color: #218838;
+    }
+
+    .overlay {
+      display: none;
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: rgba(0,0,0,0.4);
+      z-index: 999;
     }
 
     .popup-form {
@@ -37,30 +66,30 @@
       box-shadow: 0 5px 15px rgba(0,0,0,0.3);
       border-radius: 10px;
       z-index: 1000;
+      width: 400px;
     }
 
     .popup-form input, .popup-form textarea {
       display: block;
       margin-bottom: 10px;
-      padding: 8px;
+      padding: 10px;
       width: 100%;
+      border: 1px solid #ccc;
+      border-radius: 5px;
     }
 
     .popup-form button {
       background-color: #007bff;
       color: white;
-      padding: 8px 12px;
+      padding: 10px;
       border: none;
+      border-radius: 5px;
       cursor: pointer;
+      transition: background-color 0.3s;
     }
 
-    .overlay {
-      display: none;
-      position: fixed;
-      top: 0; left: 0;
-      width: 100%; height: 100%;
-      background: rgba(0,0,0,0.4);
-      z-index: 999;
+    .popup-form button:hover {
+      background-color: #0056b3;
     }
 
     .product-list {
@@ -68,30 +97,74 @@
       flex-wrap: wrap;
       gap: 20px;
       margin-top: 20px;
+      justify-content: center;
     }
 
     .product-card {
-      border: 1px solid #ddd;
+      background-color: #fff;
+      width: 300px;
       border-radius: 10px;
-      padding: 15px;
-      width: 250px;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      overflow: hidden;
+      transition: transform 0.3s ease;
+    }
+
+    .product-card:hover {
+      transform: translateY(-5px);
     }
 
     .product-card img {
       width: 100%;
-      height: 180px;
+      height: 200px;
       object-fit: cover;
-      border-radius: 8px;
     }
 
     .product-card h4 {
       margin: 10px 0 5px;
+      padding: 0 10px;
+      color: #333;
     }
 
     .product-card p {
       margin: 0;
+      padding: 0 10px;
       font-size: 14px;
+      color: #666;
+    }
+
+    .product-card .price {
+      font-size: 18px;
+      color: #27ae60;
+      font-weight: bold;
+      padding: 0 10px;
+    }
+
+    .product-card form {
+      display: flex;
+      justify-content: space-between;
+      padding: 10px;
+    }
+
+    .product-card form button {
+      padding: 6px 10px;
+      border: none;
+      border-radius: 5px;
+      color: white;
+      background-color: #007bff;
+      cursor: pointer;
+      transition: opacity 0.3s;
+    }
+
+    .product-card form button:hover {
+      opacity: 0.9;
+    }
+
+    .product-card form .delete-button {
+      background-color: red;
+    }
+
+    .product-card form .delete-button:hover {
+      opacity: 0.8;
     }
   </style>
 </head>
@@ -112,58 +185,58 @@
       <input type="text" name="name" placeholder="Product Name" required />
       <input type="text" name="category" placeholder="Category" required />
       <input type="file" name="image" accept="image/*" required />
-      <input type="number" step="0.01" name="price" placeholder="Price" />
+      <input type="number" step="0.01" name="price" placeholder="Price" required />
       <textarea name="description" placeholder="Description"></textarea>
       <button type="submit">Add Product</button>
     </form>
   </div>
-<!-- Product List Section -->
-<div class="product-list">
-  <?php
-    // MySQL connection
-    $conn = new mysqli('localhost', 'root', '', 'printcity');
 
-    if ($conn->connect_error) {
-      die("Connection failed: " . $conn->connect_error);
-    }
+  <!-- Product List Section -->
+  <div class="product-list">
+    <?php
+      // MySQL connection
+      $conn = new mysqli('localhost', 'root', '', 'printcity');
 
-    $sql = "SELECT * FROM products ORDER BY created_at DESC";
-    $result = $conn->query($sql);
-
-    if ($result->num_rows > 0) {
-      while ($row = $result->fetch_assoc()) {
-        echo '<div class="product-card">';
-        if (!empty($row['image_path']) && file_exists($row['image_path'])) {
-          echo '<img src="' . $row['image_path'] . '" alt="Product Image">';
-        } else {
-          echo '<img src="placeholder.jpg" alt="No image">';
-        }
-        echo '<h4>' . htmlspecialchars($row['name']) . '</h4>';
-        echo '<p><strong>Category:</strong> ' . htmlspecialchars($row['category']) . '</p>';
-        echo '<p><strong>Price:</strong> ₹' . number_format($row['price'], 2) . '</p>';
-        echo '<p>' . htmlspecialchars($row['description']) . '</p>';
-
-        // 🔧 Add Edit & Delete Buttons
-        echo '<form action="edit.php" method="GET" style="display:inline-block; margin-top:10px; margin-right:10px;">
-                <input type="hidden" name="id" value="' . $row['product_id'] . '">
-                <button type="submit">Edit</button>
-              </form>';
-
-        echo '<form action="delete.php" method="POST" style="display:inline-block; margin-top:10px;" onsubmit="return confirm(\'Are you sure?\')">
-                <input type="hidden" name="id" value="' . $row['product_id'] . '">
-                <button type="submit" style="background-color:red; color:white;">Delete</button>
-              </form>';
-
-        echo '</div>';
+      if ($conn->connect_error) {
+        die("Connection failed: " . $conn->connect_error);
       }
-    } else {
-      echo "<p>No products available.</p>";
-    }
 
-    $conn->close();
-  ?>
-</div>
+      $sql = "SELECT * FROM products ORDER BY created_at DESC";
+      $result = $conn->query($sql);
 
+      if ($result->num_rows > 0) {
+        while ($row = $result->fetch_assoc()) {
+          echo '<div class="product-card">';
+          if (!empty($row['image_path']) && file_exists($row['image_path'])) {
+            echo '<img src="' . $row['image_path'] . '" alt="Product Image">';
+          } else {
+            echo '<img src="placeholder.jpg" alt="No image">';
+          }
+          echo '<h4>' . htmlspecialchars($row['name']) . '</h4>';
+          echo '<p><strong>Category:</strong> ' . htmlspecialchars($row['category']) . '</p>';
+          echo '<p class="price">₹' . number_format($row['price'], 2) . '</p>';
+          echo '<p>' . htmlspecialchars($row['description']) . '</p>';
+
+          // Edit & Delete Buttons
+          echo '<form action="edit.php" method="GET" style="display:inline-block;">
+                  <input type="hidden" name="id" value="' . $row['product_id'] . '">
+                  <button type="submit">Edit</button>
+                </form>';
+
+          echo '<form action="delete.php" method="POST" style="display:inline-block;" onsubmit="return confirm(\'Are you sure?\')">
+                  <input type="hidden" name="id" value="' . $row['product_id'] . '">
+                  <button type="submit" class="delete-button">Delete</button>
+                </form>';
+
+          echo '</div>';
+        }
+      } else {
+        echo "<p>No products available.</p>";
+      }
+
+      $conn->close();
+    ?>
+  </div>
 
   <script>
     function openForm() {

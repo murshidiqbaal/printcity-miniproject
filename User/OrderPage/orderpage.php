@@ -66,8 +66,9 @@ if (isset($_GET['product_id'])) {
   <p><strong>Category:</strong> <?= htmlspecialchars($product['category']) ?></p>
   <p><strong>Price:</strong> ₹<?= number_format($product['price'], 2) ?></p>
 
-  <form method="post" action="submitorder.php">
+<form method="post" action="submitorder.php">
     <input type="hidden" name="product_id" value="<?= $product['product_id'] ?>">
+    <input type="hidden" name="price" value="<?= $product['price'] ?>"> <!-- Pass price -->
 
     <label>Your Name:</label>
     <input type="text" name="customer_name" required>
@@ -79,7 +80,8 @@ if (isset($_GET['product_id'])) {
     <input type="number" name="quantity" min="1" value="1" required>
 
     <button type="submit">Place Order</button>
-  </form>
+</form>
+
 </div>
 
 </body>

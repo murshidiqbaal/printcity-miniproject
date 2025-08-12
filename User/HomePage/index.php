@@ -17,7 +17,7 @@
       <li><a href="#products">Products</a></li>
       <li><a href="#custom">Custom</a></li>
       <li><a href="../myorder/myorder.php">My Orders</a></li>
-      <li><a href="../contactus/contactus.php">Contact Us</a></li>
+      <li><a href="../myprofile/myprofile.php">My Profile</a></li>
       <li><a href="#aboutus">About Us</a></li>
     </ul>
   </nav>
