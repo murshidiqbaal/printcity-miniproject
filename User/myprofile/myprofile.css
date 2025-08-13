@@ -148,9 +148,14 @@
             display: grid;
             grid-template-columns: repeat(2, 1fr);
             gap: 20px;
+            margin-top: 20px;
+
         }
 
         .form-group {
+            padding: 12px 15px;
+            border: 1px solid var(--medium-gray);
+            border-radius: 6px;
             margin-bottom: 20px;
         }
 
@@ -164,25 +169,32 @@
             font-weight: 500;
         }
 
-        .form-control {
-            width: 100%;
-            padding: 12px 15px;
-            border: 1px solid var(--medium-gray);
-            border-radius: 6px;
-            font-size: 15px;
-            transition: all 0.3s;
-        }
+       .form-control {
+    width: 100%;
+    padding: 14px 16px; /* slightly bigger padding */
+    border: 1px solid var(--medium-gray);
+    border-radius: 8px; /* more rounded corners */
+    font-size: 15px;
+    background-color: white;
+    transition: all 0.3s ease;
+    box-shadow: inset 0 1px 2px rgba(0,0,0,0.05); /* subtle inner shadow */
+}
+.form-control:hover {
+    border-color: var(--primary-color);
+    background-color: var(--secondary-color);
+}
 
-        .form-control:focus {
-            border-color: var(--primary-color);
-            outline: none;
-            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
-        }
-
+       .form-control:focus {
+    border-color: var(--primary-color);
+    outline: none;
+    background-color: #fff;
+    box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.15); /* focus glow */
+}
         textarea.form-control {
             min-height: 100px;
             resize: vertical;
         }
+
 
         .radio-group {
             display: flex;

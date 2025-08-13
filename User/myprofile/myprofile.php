@@ -13,8 +13,52 @@ if (!isset($_SESSION['user_id'])) {
     exit();
     
 }
+if (isset($_FILES['profile_picture']) && $_FILES['profile_picture']['error'] === UPLOAD_ERR_OK) {
+    $target_dir = "imgs/"; // Current folder + imgs/
+    $file_name = basename($_FILES["profile_picture"]["name"]);
+    $target_file = $target_dir . $file_name;
+
+    // Move uploaded file to imgs folder
+    if (move_uploaded_file($_FILES["profile_picture"]["tmp_name"], $target_file)) {
+        // Save just the filename in DB
+        $profile_picture = $file_name;
+
+        // Update DB
+        $stmt = $pdo->prepare("UPDATE user_profiles SET profile_picture = ? WHERE id = ?");
+        $stmt->execute([$profile_picture, $user_id]);
+    } else {
+        echo "Error moving file.";
+    }
+}
+
 
 $user_id = $_SESSION['user_id'];
+
+// Fetch user details
+$sql = "SELECT * FROM user_profiles WHERE user_id = ?";
+$stmt = $conn->prepare($sql);
+$stmt->bind_param("i", $user_id);
+$stmt->execute();
+$result = $stmt->get_result();
+
+if ($result->num_rows > 0) {
+    $user_data = $result->fetch_assoc();
+} else {
+    // If profile not created yet, initialize empty values
+    $user_data = [
+        'fullname' => '',
+        'email' => '',
+        'phone' => '',
+        'address' => '',
+        'profile_picture' => '',
+        'payment_method' => '',
+        'delivery_notes' => '',
+        
+    ];
+}
+
+$profile_picture = htmlspecialchars($user_data['profile_picture'] ?? '');
+$full_name       = htmlspecialchars($user_data['fullname'] ?? '');
 
 // If form is submitted
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
@@ -31,11 +75,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $profile_picture = mysqli_real_escape_string($conn, $_POST['profile_picture']);
 
     // Check if user already has a profile
-    $check = mysqli_query($conn, "SELECT id FROM profile WHERE user_id = '$user_id' LIMIT 1");
+    $check = mysqli_query($conn, "SELECT id FROM user_profiles WHERE user_id = '$user_id' LIMIT 1");
 
     if (mysqli_num_rows($check) > 0) {
         // UPDATE existing profile
-        $sql = "UPDATE profile SET 
+        $sql = "UPDATE user_profiles SET 
                     full_name='$full_name',
                     email='$email',
                     phone='$phone',
@@ -51,7 +95,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $msg = "Profile updated successfully!";
     } else {
         // INSERT new profile
-        $sql = "INSERT INTO profile 
+        $sql = "INSERT INTO user_profiles 
                 (user_id, full_name, email, phone, address, city, state, zip_code, country, delivery_notes, payment_method, profile_picture) 
                 VALUES 
                 ('$user_id', '$full_name', '$email', '$phone', '$address', '$city', '$state', '$zip_code', '$country', '$delivery_notes', '$payment_method', '$profile_picture')";
@@ -66,27 +110,14 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 }
 
 // Fetch user profile data to display in form
-$result = mysqli_query($conn, "SELECT * FROM profile WHERE user_id = '$user_id' LIMIT 1");
+$result = mysqli_query($conn, "SELECT * FROM user_profiles WHERE user_id = '$user_id' LIMIT 1");
 $profile = mysqli_fetch_assoc($result);
-?>
-
-// Process form submission
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    // In a real app, you would:
-    // 1. Validate all inputs
-    // 2. Sanitize dataz
-    // 3. Update database
-    // 4. Show success/error message
-    $user_data = array_merge($user_data, $_POST);
-    
-    // For demonstration, we'll just set a success message
-    $success_message = "Profile updated successfully!";
-}
-
 $stmt->close();
 $conn->close();
-
 ?>
+
+
+
 
 <!DOCTYPE html>
 <html lang="en">
@@ -110,10 +141,13 @@ $conn->close();
 
         <div class="profile-container">
             <div class="profile-sidebar">
-                <img src="<?php echo htmlspecialchars($user_data['profile_picture']); ?>" alt="Profile picture of <?php echo htmlspecialchars($user_data['full_name']); ?>" class="profile-picture">
-                <h2 class="profile-name"><?php echo htmlspecialchars($user_data['full_name']); ?></h2>
-                <div class="profile-email"><?php echo htmlspecialchars($user_data['email']); ?></div>
-                
+<img src="imgs/<?php echo htmlspecialchars($user_data['profile_picture'] ?? 'default.png'); ?>"
+     alt="Profile picture of <?php echo htmlspecialchars($user_data['full_name'] ?? '', ENT_QUOTES, 'UTF-8'); ?>"
+     class="profile-picture">
+
+                <h2 class="profile-name"><?php echo htmlspecialchars($user_data['full_name'] ?? '', ENT_QUOTES, 'UTF-8'); ?></h2>
+                <div class="profile-email"><?php echo htmlspecialchars($user_data['email'] ?? '', ENT_QUOTES, 'UTF-8'); ?></div>
+
                 <ul class="nav-menu">
                     <li class="nav-item"><a href="#profile-main" class="nav-link active"><i class="fas fa-user-circle"></i> Personal Info</a></li>
                     <li class="nav-item"><a href="#profile-delivery" class="nav-link"><i class="fas fa-map-marker-alt"></i> Delivery Addresses</a></li>
@@ -129,17 +163,17 @@ $conn->close();
                     <div class="form-grid">
                         <div class="form-group">
                             <label for="full_name" class="form-label">Full Name</label>
-                            <input type="text" name="full_name" placeholder="Full Name" value="<?php echo $profile['full_name'] ?? ''; ?>" required><br>
+                            <input type="text" class="form-control" name="full_name" placeholder="Full Name" value="<?php echo $profile['full_name'] ?? ''; ?>" required><br>
                         </div>
                         
                         <div class="form-group">
                             <label for="email" class="form-label">Email Address</label>
-                            <input type="email" name="email" placeholder="Email Address" value="<?php echo $profile['email'] ?? ''; ?>" required>
+                            <input type="email" class="form-control" name="email" placeholder="Email Address" value="<?php echo $profile['email'] ?? ''; ?>" required>
                         </div>
                         
                         <div class="form-group">
                             <label for="phone" class="form-label">Phone Number</label>
-                            <input type="tel" name="phone" placeholder="Phone Number" value="<?php echo $profile['phone'] ?? ''; ?>" required>
+                            <input type="tel" class="form-control" name="phone" placeholder="Phone Number" value="<?php echo $profile['phone'] ?? ''; ?>" required>
                         </div>
                         
                         <div class="form-group">
@@ -161,17 +195,17 @@ $conn->close();
                         
                         <div class="form-group">
                             <label for="city" class="form-label">City</label>
-                            <input type="text" name="city" placeholder="City" value="<?php echo $profile['city'] ?? ''; ?>"><br>
+                            <input type="text" name="city" class="form-control" placeholder="City" value="<?php echo $profile['city'] ?? ''; ?>">
                         </div>
                         
                         <div class="form-group">
                             <label for="state" class="form-label">State/Province</label>
-                            <input type="text" name="state" placeholder="State/Province" value="<?php echo $profile['state'] ?? ''; ?>" required>
+                            <input type="text" name="state" class="form-control" placeholder="State/Province" value="<?php echo $profile['state'] ?? ''; ?>" required>
                         </div>
                         
                         <div class="form-group">
-                            <label for="zip_code" class="form-label">ZIP/Postal Code</label> 
-                            <input type="text" name="zip_code" placeholder="Zip Code" value="<?php echo $profile['zip_code'] ?? ''; ?>"><br>
+                            <label for="zip_code" class="form-label">ZIP/Postal Code</label>
+                            <input type="text" name="zip_code" class="form-control" placeholder="Zip Code" value="<?php echo $profile['zip_code'] ?? ''; ?>">
                         </div>
                         
                         <div class="form-group">
@@ -181,14 +215,15 @@ $conn->close();
                                 <option value="United States" <?php echo $user_data['country'] === 'United States' ? 'selected' : ''; ?>>United States</option>
                                 <option value="Canada" <?php echo $user_data['country'] === 'Canada' ? 'selected' : ''; ?>>Canada</option>
                                 <option value="United Kingdom" <?php echo $user_data['country'] === 'United Kingdom' ? 'selected' : ''; ?>>United Kingdom</option>
-                                <option value="Kerala" <?php echo $user_data['country'] === 'Kerala' ? 'selected' : ''; ?>>Kerala</option>
+                                <option value="India" <?php echo $user_data['country'] === 'India' ? 'selected' : ''; ?>>India</option>
 
                             </select>
                         </div>
                         
                         <div class="form-group full-width">
                             <label for="delivery_notes" class="form-label">Delivery Notes (Optional)</label>
-                            <textarea id="delivery_notes" name="delivery_notes" class="form-control"><?php echo htmlspecialchars($user_data['delivery_notes']); ?></textarea>
+                            <textarea id="delivery_notes" name="delivery_notes" class="form-control">
+                            </textarea>
                             <p style="font-size: 13px; color: var(--dark-gray); margin-top: 5px;">Special instructions for delivery drivers or package handling</p>
                         </div>
                     </div>

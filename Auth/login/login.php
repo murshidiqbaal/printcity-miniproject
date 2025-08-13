@@ -20,12 +20,14 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
     if ($res->num_rows === 1) {
         $row = $res->fetch_assoc();
+
         // Check if password matches
         if (password_verify($password, $row['password'])) {
-            $_SESSION["username"] = $username;
-            $_SESSION["role"] = $row['role']; // store role in session
-            $_SESSION['user_id'] = $row['id'];
-            $_SESSION['username'] = $row['username'];
+
+            // Store all required session data
+            $_SESSION["user_id"] = $row['user_id'];  // <-- Correct field name from your table
+            $_SESSION["username"] = $row['username'];
+            $_SESSION["role"] = $row['role'];
 
             // Redirect based on role
             if ($row['role'] === 'admin') {
