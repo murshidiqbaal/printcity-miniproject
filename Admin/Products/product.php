@@ -71,7 +71,7 @@
     }
 
     .product-card {
-      border: 1px solid #ddd;
+      border: 1px solid #a01e1eff;
       border-radius: 10px;
       padding: 15px;
       width: 250px;
