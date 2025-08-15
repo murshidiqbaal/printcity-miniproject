@@ -45,8 +45,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $stmt->bind_param("sssds", $name, $category, $imagePath, $price, $description);
 
     if ($stmt->execute()) {
-        echo "Product added successfully!";
-        echo '<br><a href="./product.php">Go back</a>';
+       header("Location: ./product.php");
+       exit;
     } else {
         echo "Error: " . $stmt->error;
     }

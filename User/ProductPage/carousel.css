@@ -1,0 +1,120 @@
+ body {
+      background-color: black;
+  margin: 0;
+  height: 100vh;
+  display: flex;
+  justify-content: center; /* horizontal center */
+  align-items: center;     /* vertical center */
+}
+
+ .right {
+    
+  height: 100vh;
+  flex-basis: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+  position: fixed; /* so absolute .card positioning is relative here */
+ }
+
+     
+      .title {
+        width: 420px;
+        font-size: 84px;
+        font-family: poppins;
+        font-weight: 700;
+        line-height: 88px;
+      }
+      .sub-title {
+        width: 420px;
+        font-family: poppins;
+        font-size: 14px;
+        margin-top: 30px;
+      }
+      .sub-title button {
+        font-family: poppins;
+        font-size: 14px;
+        padding: 15px 30px;
+        background: black;
+        color: white;
+        border-radius: 8mm;
+        border: none;
+        outline: none;
+        cursor: pointer;
+        margin-top: 20px;
+      }
+.card {
+  width: 350px;
+  height: 350px;
+  border-radius: 25px;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  transition: transform 0.6s ease, opacity 0.6s ease;
+  box-sizing: border-box;
+  padding: 35px;
+  display: flex;
+  justify-content: space-between;
+  flex-direction: column;
+  opacity: 1;
+}
+
+/* Left-moving cards */
+.card.move-left {
+  transform: translate(-150%, -50%);
+  opacity: 0.8;
+}
+
+/* Right-moving cards */
+.card.move-right {
+  transform: translate(50%, -50%);
+  opacity: 0.8;
+}
+
+      .card:nth-child(1) {
+        background: rgb(64, 122, 255);
+      }
+      .card:nth-child(2) {
+        background: rgb(221, 62, 88);
+      }
+      .card:nth-child(3) {
+        background: rgb(186, 113, 245);
+      }
+      .card:nth-child(4) {
+        background: rgb(247, 92, 208);
+      }
+       .card:nth-child(5) {
+        background: rgb(54, 161, 88);
+      }
+
+    
+      .sub {
+        font-family: poppins;
+        font-size: 20px;
+        font-weight: 700;
+      }
+      .content {
+        font-family: poppins;
+        font-size: 44px;
+        font-weight: 700;
+        line-height: 54px;
+      }
+
+     .away {
+        transform-origin: bottom left;
+      }
+
+       @keyframes slideIn {
+      0% {
+        transform: translateY(100%);
+      }
+      100% {
+        transform: translateY(0);
+      }
+    }
+    
+     body {
+  padding-bottom: 1000px; /* Adds 300px of extra scroll space */
+}

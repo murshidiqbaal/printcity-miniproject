@@ -1,37 +1,42 @@
 <?php
-session_start(); // If you need user_id from login
+session_start();
 
 $conn = mysqli_connect("localhost", "root", "", "printcity");
 if (!$conn) {
     die("Connection failed: " . mysqli_connect_error());
 }
 
-// Get form data
-$product_id    = intval($_POST['product_id']);
-$price         = floatval($_POST['price']);
-$customer_name = mysqli_real_escape_string($conn, $_POST['customer_name']);
-$address       = mysqli_real_escape_string($conn, $_POST['address']);
-$quantity      = intval($_POST['quantity']);
-$user_id       = isset($_SESSION['user_id']) ? intval($_SESSION['user_id']) : null;
+// Check if user is logged in
+if (!isset($_SESSION['user_id'])) {
+    header("Location: ../login.php");
+    exit();
+}
 
-// 1. Insert into orders
-$order_sql = "INSERT INTO orders (customer_name, address, order_date, status, user_id) 
-              VALUES ('$customer_name', '$address', NOW(), 'Pending', " . ($user_id ? $user_id : "NULL") . ")";
+$user_id = intval($_SESSION['user_id']);
+
+// Get form data
+$product_id   = intval($_POST['product_id']);
+$amount       = floatval($_POST['amount']);  // amount entered manually
+
+// Fetch user details from user_profiles
+$user_query = "SELECT full_name, address, phone FROM user_profiles WHERE user_id = $user_id";
+$user_result = mysqli_query($conn, $user_query);
+if (!$user_result || mysqli_num_rows($user_result) == 0) {
+    die("User profile not found.");
+}
+$user = mysqli_fetch_assoc($user_result);
+
+// Insert order
+$order_sql = "INSERT INTO orders (product_id, customer_name, address, quantity, order_date, status, user_id) 
+              VALUES ($product_id, '" . mysqli_real_escape_string($conn, $user['full_name']) . "', 
+                      '" . mysqli_real_escape_string($conn, $user['address']) . "', 
+                      $amount, NOW(), 'Pending', $user_id)";
 
 if (mysqli_query($conn, $order_sql)) {
-    $order_id = mysqli_insert_id($conn); // Get the new order ID
-
-    // 2. Insert into order_items
-    $item_sql = "INSERT INTO order_items (order_id, product_id, quantity) 
-                 VALUES ($order_id, $product_id, $quantity)";
-    if (mysqli_query($conn, $item_sql)) {
-        echo "<p>Order placed successfully!</p>";
-        echo "<a href='myorder.php'>View My Orders</a>";
-    } else {
-        echo "Error adding order item: " . mysqli_error($conn);
-    }
+   header("Location: ../myorder/myorder.php");
+   exit();
 } else {
-    echo "Error creating order: " . mysqli_error($conn);
+    echo "Error placing order: " . mysqli_error($conn);
 }
 
 mysqli_close($conn);

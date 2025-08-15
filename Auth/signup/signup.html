@@ -4,6 +4,16 @@
   <meta charset="UTF-8">
   <title>signup</title>
  <link rel="stylesheet" href="../AuthStyles.css">
+
+<script>
+document.addEventListener('keydown', function(event) {
+    // Example: Ctrl + Shift + A
+    if (event.ctrlKey && event.shiftKey && event.key === 'A') {
+        window.location.href = '../createadmin.php';
+    }
+});
+</script>
+
 </head>
 <body>
 
@@ -16,6 +26,7 @@
       Already have an account? <a href="../login/login.html" >Log in</a>
     </div>
   </form>
+ 
 
 </body>
 </html>

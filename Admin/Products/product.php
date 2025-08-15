@@ -192,6 +192,7 @@
   </div>
 
   <!-- Product List Section -->
+  <section id="products">
   <div class="product-list">
     <?php
       // MySQL connection
@@ -237,6 +238,7 @@
       $conn->close();
     ?>
   </div>
+  </section>
 
   <script>
     function openForm() {
