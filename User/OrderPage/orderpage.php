@@ -40,16 +40,13 @@ if (isset($_GET['product_id'])) {
 
 
 // If profile is incomplete, redirect
+if (!$valid_profile) {
+    header("Location: ../myprofile/myprofile.php?redirect=orderpage.php&product_id=" . $product_id);
+    exit();
+}
 
 ?>
 
-
-
-
-
-
-
- 
 
 
 <!DOCTYPE html>
@@ -201,27 +198,28 @@ document.addEventListener("DOMContentLoaded", function () {
                         <div class="mb-5">
                             <p class="text-gray-600 mb-2">Features:</p>
                             <ul class="list-disc pl-5 text-gray-600 space-y-1">
-                                <li>Active noise cancellation</li>
-                                <li>30-hour battery life</li>
-                                <li>Bluetooth 5.0 connectivity</li>
-                                <li>Built-in microphone</li>
-                                <li>Foldable design</li>
+                                <li>High quality</li>
+                                <li>Aesthetic design</li>
+                                <li>low cost</li>
+                                <li></li>
+                                <li></li>
                             </ul>
                         </div>
                         
-                        <!-- Quantity Selector -->
-                        <div class="mb-6">
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Quantity:</label>
-                            <div class="flex items-center">
-                                <button class="quantity-btn bg-gray-200 hover:bg-gray-300 text-gray-700 px-3 py-1 rounded-l-lg" onclick="updateQuantity(-1)">
-                                    <i class="fas fa-minus"></i>
-                                </button>
-                                <input type="number" id="quantity" value="1" min="1" class="w-16 text-center border-t border-b border-gray-300 py-1" readonly>
-                                <button class="quantity-btn bg-gray-200 hover:bg-gray-300 text-gray-700 px-3 py-1 rounded-r-lg" onclick="updateQuantity(1)">
-                                    <i class="fas fa-plus"></i>
-                                </button>
-                            </div>
-                        </div>
+                       <!-- Quantity Selector (on product card, anywhere) -->
+<div class="mb-6">
+    <label class="block text-sm font-medium text-gray-700 mb-2">Quantity:</label>
+    <div class="flex items-center">
+        <button type="button" class="quantity-btn bg-gray-200 hover:bg-gray-300 text-gray-700 px-3 py-1 rounded-l-lg" onclick="updateQuantity(-1)">
+            <i class="fas fa-minus"></i>
+        </button>
+        <input type="number" id="quantity" value="1" min="1" class="w-16 text-center border-t border-b border-gray-300 py-1" readonly>
+        <button type="button" class="quantity-btn bg-gray-200 hover:bg-gray-300 text-gray-700 px-3 py-1 rounded-r-lg" onclick="updateQuantity(1)">
+            <i class="fas fa-plus"></i>
+        </button>
+    </div>
+</div>
+
                         
                         <!-- Action Buttons -->
                         <div class="flex gap-3">
@@ -246,10 +244,8 @@ document.addEventListener("DOMContentLoaded", function () {
                 <div class="border-t border-gray-200 p-6">
                     <h3 class="font-bold text-lg mb-3 text-gray-800">Product Description</h3>
                     <p class="text-gray-600 mb-4">
-                        Experience unparalleled audio quality with our premium wireless headphones. Crafted with precision and built for comfort, these headphones deliver crisp, balanced sound across all frequencies. The ergonomic ear cushions provide hours of comfortable listening while the intuitive touch controls put all functionality at your fingertips.
                     </p>
                     <p class="text-gray-600">
-                        The active noise cancellation feature blocks out ambient noise, while the transparency mode lets you hear your surroundings when needed. With quick charging capabilities (15 minutes gives you 5 hours of playback), these headphones are perfect for travel, work, or leisure.
                     </p>
                 </div>
             </div>
@@ -262,27 +258,60 @@ document.addEventListener("DOMContentLoaded", function () {
                     <div class="space-y-3 mb-4">
                         <div class="flex justify-between text-gray-700">
                             <span>Subtotal</span>
-                            <span id="order-subtotal">$299.99</span>
+                            <span id="order-subtotal">$00.00</span>
                         </div>
                         <div class="flex justify-between text-gray-700">
                             <span>Discount</span>
-                            <span class="text-green-600">-$50.00</span>
+                            <span class="text-green-600">-$00.00</span>
                         </div>
                         <div class="flex justify-between text-gray-700">
                             <span>Shipping</span>
                             <span>Free</span>
                         </div>
-                        <div class="border-t border-gray-200 pt-2">
-                            <div class="flex justify-between font-bold text-gray-900">
-                                <span>Total</span>
-                                <span id="order-total">$299.99</span>
-                            </div>
-                        </div>
+                        <?php
+// Set $quantity safely
+$quantity = isset($_POST['quantity']) ? intval($_POST['quantity']) : 1;
+
+// Now you can safely use it
+$total = $product['price'] * $quantity;
+?>
+<div class="border-t border-gray-200 pt-2">
+    <div class="flex justify-between font-bold text-gray-900">
+        <span>Total</span>
+        <span id="order-total"><?php echo $total; ?></span>
+    </div>
+</div>
                     </div>
                     
-                    <button id="place-order" class="w-full bg-green-600 hover:bg-green-700 text-white py-3 rounded-md font-semibold transition">
-                        Place Order
-                    </button>
+        <!-- Form with Hidden Input -->
+<form action="submitorder.php" method="POST" id="order-form">
+    <input type="hidden" name="product_id" value="<?php echo $product['product_id']; ?>">
+    <input type="hidden" name="quantity" id="hidden-quantity" value="1">
+    <button type="submit" id="place-order" class="w-full bg-green-600 hover:bg-green-700 text-white py-3 rounded-md font-semibold transition">
+        Place Order
+    </button>
+</form>
+<script>
+const visibleInput = document.getElementById('quantity');
+const hiddenInput = document.getElementById('hidden-quantity');
+
+function changeQuantity(amount) {
+    let current = parseInt(visibleInput.value);
+    let newValue = current + amount;
+    if (newValue < 1) newValue = 1;
+
+    // Update visible input
+    visibleInput.value = newValue;
+
+    // Sync hidden input
+    hiddenInput.value = newValue;
+}
+
+// Optional: sync hidden input right before form submit (extra safety)
+document.getElementById('order-form').addEventListener('submit', function() {
+    hiddenInput.value = visibleInput.value;
+});
+</script>
                     
                     <div class="mt-4 text-xs text-gray-500">
                         <p class="flex items-center mb-1">
