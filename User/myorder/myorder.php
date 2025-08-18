@@ -13,24 +13,24 @@ if (!isset($_SESSION['user_id'])) {
 
 $user_id = intval($_SESSION['user_id']);
 
+
 // Fetch all orders of the current user with product info
 $stmt = $conn->prepare("
     SELECT 
-        o.order_id, 
-        o.customer_name, 
-        o.address, 
-        o.order_date, 
+        o.order_id,
+        o.customer_name,
+        o.address,
+        o.order_date,
         o.status,
-        GROUP_CONCAT(p.name SEPARATOR ', ') AS product_name,  -- Matches your PHP
-        SUM(oi.quantity) AS quantity,                         -- Matches your PHP
-        MIN(p.image_path) AS image_path                       -- Matches your PHP
+        p.name AS product_name,
+        p.image_path,
+        o.quantity
     FROM orders o
-    JOIN order_items oi ON o.order_id = oi.order_id
-    JOIN products p ON oi.product_id = p.product_id
+    JOIN products p ON o.product_id = p.product_id
     WHERE o.user_id = ?
-    GROUP BY o.order_id
     ORDER BY o.created_at DESC
 ");
+
 
 $stmt->bind_param("i", $user_id);
 $stmt->execute();

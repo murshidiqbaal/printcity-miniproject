@@ -73,7 +73,10 @@
         </div>
       </div>
     </div>
-
+ <div>
+   <h2>Featured Products</h2>
+   
+</div>
  <div>
 <?php include("../ProductPage/productpage.php"); ?>
 </div>
