@@ -55,7 +55,7 @@
             display: inline-block;
             padding: 5px 10px;
             border-radius: 5px;
-            color: white;
+            color: rgb(16, 15, 15);
             font-size: 0.9em;
             margin-top: 10px;
         }
@@ -63,6 +63,7 @@
         .status-processing { background-color: #2196f3; }
         .status-completed { background-color: #4caf50; }
         .status-cancelled { background-color: #f44336; }
+        .status-delivered { background-color: #28a745; }
         .track-btn {
             display: inline-block;
             margin-top: 10px;
@@ -85,4 +86,37 @@
             font-size: 50px;
             color: #ccc;
         }
+<<<<<<< HEAD
    
+=======
+ 
+
+       
+        .order-card.status-delivered {
+    background-color: #d4edda; /* light green background */
+    border: 1px solid #28a745; /* green border */
+}
+/* Delivered status */
+.status-badge.status-delivered {
+    background-color: #28a745; /* green badge */
+}
+
+.order-card.status-delivered {
+    background-color: #d4edda; /* light green card background */
+    border: 1px solid #28a745; /* green border */
+}
+
+/* Cancelled status */
+.status-badge.status-cancelled {
+    background-color: #f44336; /* red badge */
+}
+
+.order-card.status-cancelled {
+    background-color: #e0e0e0; /* light grey card background */
+    border: 1px solid #9e9e9e; /* grey border */
+    color: #555; /* optional: dark grey text */
+}
+.order-card.status-cancelled.track-btn {
+            display: none; /* hide track button for cancelled orders */
+        }
+>>>>>>> 30117ea (45%)

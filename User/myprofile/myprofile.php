@@ -24,8 +24,11 @@ if (isset($_FILES['profile_picture']) && $_FILES['profile_picture']['error'] ===
         $profile_picture = $file_name;
 
         // Update DB
-        $stmt = $pdo->prepare("UPDATE user_profiles SET profile_picture = ? WHERE id = ?");
-        $stmt->execute([$profile_picture, $user_id]);
+        $user_id = $_SESSION['user_id'];
+$stmt = $conn->prepare("UPDATE user_profiles SET profile_picture = ? WHERE user_id = ?");
+$stmt->bind_param("si", $profile_picture, $user_id);
+$stmt->execute();
+$success_message = "Profile picture updated successfully.";
     } else {
         echo "Error moving file.";
     }
@@ -92,7 +95,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                     payment_method='$payment_method',
                     profile_picture='$profile_picture'
                 WHERE user_id='$user_id'";
-        $msg = "Profile updated successfully!";
+        $msg = "";
     } else {
         // INSERT new profile
         $sql = "INSERT INTO user_profiles 
@@ -112,6 +115,19 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 // Fetch user profile data to display in form
 $result = mysqli_query($conn, "SELECT * FROM user_profiles WHERE user_id = '$user_id' LIMIT 1");
 $profile = mysqli_fetch_assoc($result);
+// Fetch recent orders for current user
+$orders = [];
+$order_sql = "SELECT order_id, order_date, quantity, total_price, status FROM orders WHERE user_id = ? ORDER BY order_date DESC LIMIT 5";
+$order_stmt = $conn->prepare($order_sql);
+$order_stmt->bind_param("i", $user_id);
+$order_stmt->execute();
+$order_result = $order_stmt->get_result();
+
+while ($row = $order_result->fetch_assoc()) {
+    $orders[] = $row;
+}
+$order_stmt->close();
+
 $stmt->close();
 $conn->close();
 ?>
@@ -130,20 +146,29 @@ $conn->close();
    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
 <body>
-    
+    <header class="bg-primary text-white p-3 d-flex align-items-center">
+    <!-- Back Arrow -->
+    <a href="../HomePage/index.php" class="text-white me-3" style="font-size: 1.5rem;">
+        <i class="fas fa-arrow-left"></i>
+        
+    </a>
+
+</header>
 
     <main class="container">
         <?php if (isset($success_message)): ?>
             <div class="alert alert-success"><?php echo $success_message; ?></div>
         <?php endif; ?>
 
-        <h1 class="page-title">My Profile</h1>
+        
 
         <div class="profile-container">
             <div class="profile-sidebar">
 <img src="imgs/<?php echo htmlspecialchars($user_data['profile_picture'] ?? 'default.png'); ?>"
      alt="Profile picture of <?php echo htmlspecialchars($user_data['full_name'] ?? '', ENT_QUOTES, 'UTF-8'); ?>"
      class="profile-picture">
+
+
 
                 <h2 class="profile-name"><?php echo htmlspecialchars($user_data['full_name'] ?? '', ENT_QUOTES, 'UTF-8'); ?></h2>
                 <div class="profile-email"><?php echo htmlspecialchars($user_data['email'] ?? '', ENT_QUOTES, 'UTF-8'); ?></div>
@@ -264,30 +289,45 @@ $conn->close();
                                 <th>Total</th>
                                 <th>Status</th>
                             </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td>#ORD-1001</td>
-                                <td>June 15, 2023</td>
-                                <td>2 Items</td>
-                                <td>$45.99</td>
-                                <td><span class="order-status status-delivered">Delivered</span></td>
-                            </tr>
-                            <tr>
-                                <td>#ORD-1000</td>
-                                <td>June 8, 2023</td>
-                                <td>1 Item</td>
-                                <td>$29.99</td>
-                                <td><span class="order-status status-delivered">Delivered</span></td>
-                            </tr>
-                            <tr>
-                                <td>#ORD-999</td>
-                                <td>May 28, 2023</td>
-                                <td>3 Items</td>
-                                <td>$67.50</td>
-                                <td><span class="order-status status-shipped">Shipped</span></td>
-                            </tr>
-                        </tbody>
+                        </thead><tbody>
+<?php if (!empty($orders)): ?>
+    <?php foreach ($orders as $order): ?>
+        <tr>
+            <td>#ORD-<?php echo htmlspecialchars($order['order_id']); ?></td>
+            <td><?php echo date("F j, Y", strtotime($order['order_date'])); ?></td>
+            <td><?php echo htmlspecialchars($order['quantity']); ?> Item<?php echo $order['quantity'] > 1 ? 's' : ''; ?></td>
+            <td>$<?php echo number_format($order['total_price'], 2); ?></td>
+            <td>
+                <?php
+                $status_class = '';
+                switch (strtolower($order['status'])) {
+                    case 'pending':
+                        $status_class = 'status-pending';
+                        break;
+                    case 'shipped':
+                        $status_class = 'status-shipped';
+                        break;
+                    case 'delivered':
+                        $status_class = 'status-delivered';
+                        break;
+                    case 'cancelled':
+                        $status_class = 'status-cancelled';
+                        break;
+                    default:
+                        $status_class = '';
+                }
+                ?>
+                <span class="order-status <?php echo $status_class; ?>">
+                    <?php echo htmlspecialchars(ucfirst($order['status'])); ?>
+                </span>
+            </td>
+        </tr>
+    <?php endforeach; ?>
+<?php else: ?>
+    <tr><td colspan="5">No recent orders found.</td></tr>
+<?php endif; ?>
+</tbody>
+
                     </table>
                 </div>
             </div>

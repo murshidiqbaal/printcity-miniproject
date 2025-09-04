@@ -46,6 +46,15 @@ $result = $stmt->get_result();
     <link rel="stylesheet" href="myorder.css">
 </head>
 <body>
+<header class="bg-primary text-white p-3 d-flex align-items-center">
+    <!-- Back Arrow -->
+    <a href="../HomePage/index.php" class="text-white me-3" style="font-size: 1.5rem;">
+        <i class="fas fa-arrow-left"></i>
+    </a>
+</header>
+
+
+
 <div class="container">
     <h1 class="page-title">My Orders</h1>
     <div class="order-grid">
@@ -58,9 +67,19 @@ $result = $stmt->get_result();
                     case 'processing': $status_class = 'status-processing'; break;
                     case 'shipped': case 'completed': $status_class = 'status-completed'; break;
                     case 'cancelled': $status_class = 'status-cancelled'; break;
+                    case 'delivered': $status_class = 'status-delivered'; break;
                 }
             ?>
-            <div class="order-card">
+          <?php
+$card_class = '';
+$status_lower = strtolower($order['status']);
+if ($status_lower === 'delivered') {
+    $card_class = 'status-delivered';
+} elseif ($status_lower === 'cancelled') {
+    $card_class = 'status-cancelled';
+}
+?>
+<div class="order-card <?= $card_class ?>">
                 <img src="/miniproject/Admin/Products/<?= htmlspecialchars($order['image_path']) ?>" 
                      alt="<?= htmlspecialchars($order['product_name']) ?>" class="order-image">
                 <div class="order-details">

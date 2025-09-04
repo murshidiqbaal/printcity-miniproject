@@ -1,4 +1,17 @@
 
+<?php
+// Database connection
+$conn = mysqli_connect("localhost", "root", "", "printcity");
+if (!$conn) {
+    die("Connection failed: " . mysqli_connect_error());
+}
+
+// Fetch all products
+$sql = "SELECT * FROM products LIMIT 6";
+$result = mysqli_query($conn, $sql);
+?>
+
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -15,16 +28,15 @@
     <ul>
       
       <li><a href="#products">Products</a></li>
-      <li><a href="#custom">Custom</a></li>
+      <li><a href="#offers">Offers</a></li>
       <li><a href="../myorder/myorder.php">My Orders</a></li>
       <li><a href="../myprofile/myprofile.php">My Profile</a></li>
-      <li><a href="#aboutus">About Us</a></li>
+      <li><a href="../favourite/favourite.php">Favourites</a></li>
     </ul>
   </nav>
 </div>
    </header>
 
-    
 
   <div class="starter-animation">
     <div class="logo-text" id="fade-text">
@@ -73,10 +85,8 @@
         </div>
       </div>
     </div>
- <div>
-   <h2>Featured Products</h2>
-   
-</div>
+ 
+
  <div>
 <?php include("../ProductPage/productpage.php"); ?>
 </div>
