@@ -311,7 +311,7 @@ unset($status);
                     <h3 class="text-lg font-semibold text-gray-800"><?= htmlspecialchars($order['product_name']) ?></h3>
                     <p class="text-gray-600 mb-2">Quantity: <?= $order['quantity'] ?></p>
 <p class="text-2xl font-bold text-blue-600">
-    $<?= number_format($order['total_price'], 2) ?>
+    <?php echo '$' . number_format($order['total_price'], 2); ?>
 </p>
                 </div>
             </div>

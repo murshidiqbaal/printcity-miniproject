@@ -118,12 +118,14 @@ if (isset($_SESSION['user_id'])) {
     <header class="bg-blue-600 text-white p-4 shadow-md">
         <div class="container mx-auto flex justify-between items-center">
             <h1 class="text-2xl font-bold">PrintCity</h1>
-            <div class="relative">
-                <button id="cart-toggle" class="relative p-2 rounded-full hover:bg-blue-500 transition">
-                    <i class="fas fa-shopping-cart text-xl"></i>
-<span id="cart-count" class="absolute -top-1 -right-1 bg-red-500 text-xs rounded-full w-5 h-5 flex items-center justify-center">
-    <?php echo $cart_count; ?>
-</span>                </button>
+            <a href="../favourite/favourite.php?user_id=<?= $_SESSION['user_id']; ?>" 
+   class="relative p-2 rounded-full hover:bg-blue-500 transition">
+    <i class="fas fa-heart text-xl"></i>
+    <span id="cart-count" class="absolute -top-1 -right-1 bg-red-500 text-xs rounded-full w-5 h-5 flex items-center justify-center">
+        <?= $cart_count; ?>
+    </span>
+</a>
+
                 <div id="cart-dropdown" class="hidden absolute right-0 mt-2 w-80 bg-white rounded-md shadow-lg z-10 border border-gray-200">
                     <div id="cart-items" class="p-4">
                         <div id="empty-cart" class="cart-empty text-center py-8">
@@ -174,60 +176,99 @@ document.addEventListener("DOMContentLoaded", function () {
                         <img src="../../Admin/Products/<?php echo $product['image_path']; ?>" alt="Premium wireless headphones with black matte finish and adjustable headband" class="w-full h-auto rounded-lg">
                     </div>
                     
-                    <!-- Product Info -->
-                    <div class="md:w-1/2 p-6">
-                        <span class="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full mb-2 inline-block">Best Seller</span>
-                        <h2 class="text-2xl font-bold text-gray-800 mb-2"><?php echo htmlspecialchars($product['name']); ?></h2>
-                        <div class="flex items-center mb-3">
-                            <div class="flex text-yellow-400">
-                                <i class="fas fa-star"></i>
-                                <i class="fas fa-star"></i>
-                                <i class="fas fa-star"></i>
-                                <i class="fas fa-star"></i>
-                                <i class="fas fa-star-half-alt"></i>
-                            </div>
-                            <span class="text-gray-500 ml-2">(382 reviews)</span>
-                        </div>
-                        
-                        <div class="mb-4">
-                            <span class="text-3xl font-bold text-gray-900"><?php echo htmlspecialchars($product['price']); ?></span>
-                            <span class="text-sm text-gray-500 line-through ml-2">$349.99</span>
-                            <span class="text-sm text-green-600 ml-2">15% Off</span>
-                        </div>
-                        
-                        <div class="mb-5">
-                            <p class="text-gray-600 mb-2">Features:</p>
-                            <ul class="list-disc pl-5 text-gray-600 space-y-1">
-                                <li>High quality</li>
-                                <li>Aesthetic design</li>
-                                <li>low cost</li>
-                                <li></li>
-                                <li></li>
-                            </ul>
-                        </div>
-                        
-                       <!-- Quantity Selector (on product card, anywhere) -->
-<div class="mb-6">
-    <label class="block text-sm font-medium text-gray-700 mb-2">Quantity:</label>
-    <div class="flex items-center">
-        <button type="button" class="quantity-btn bg-gray-200 hover:bg-gray-300 text-gray-700 px-3 py-1 rounded-l-lg" onclick="updateQuantity(-1)">
-            <i class="fas fa-minus"></i>
-        </button>
-        <input type="number" id="quantity" value="1" min="1" class="w-16 text-center border-t border-b border-gray-300 py-1" readonly>
-        <button type="button" class="quantity-btn bg-gray-200 hover:bg-gray-300 text-gray-700 px-3 py-1 rounded-r-lg" onclick="updateQuantity(1)">
-            <i class="fas fa-plus"></i>
-        </button>
-    </div>
-</div>
+            <!-- Product Info -->
+<div class="md:w-1/2 p-6">
+    <!-- Best Seller Badge -->
+    <?php if (!empty($product['is_best_seller']) && $product['is_best_seller'] == 1): ?>
+        <span class="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full mb-2 inline-block">Best Seller</span>
+    <?php endif; ?>
 
-                        
-                        <!-- Action Buttons -->
-                        <div class="flex gap-3">
-                          <button id="add-to-favourite"
-        data-product-id="<?php echo $product['product_id']; ?>"
-        class="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-md transition favourite-btn">
-    <i class="fas fa-heart mr-2"></i> Favourite
-</button>
+    <!-- Product Name -->
+    <h2 class="text-2xl font-bold text-gray-800 mb-2">
+        <?php echo htmlspecialchars($product['name']); ?>
+    </h2>
+
+    <!-- Dummy Reviews (can be dynamic later) -->
+    <div class="flex items-center mb-3">
+        <div class="flex text-yellow-400">
+            <i class="fas fa-star"></i>
+            <i class="fas fa-star"></i>
+            <i class="fas fa-star"></i>
+            <i class="fas fa-star"></i>
+            <i class="fas fa-star-half-alt"></i>
+        </div>
+        <span class="text-gray-500 ml-2">(382 reviews)</span>
+    </div>
+
+    <!-- Pricing -->
+    <div class="mb-4">
+        <?php 
+        $price = $product['price'] ?? 0;
+        $discount = $product['discount'] ?? 0;
+        $final_price = $price;
+        if ($discount > 0) {
+            $final_price = $price - ($price * ($discount / 100));
+        }
+        ?>
+        <span class="text-3xl font-bold text-gray-900">
+            ₹<?php echo number_format($final_price, 2); ?>
+        </span>
+
+        <?php if ($discount > 0): ?>
+            <span class="text-sm text-gray-500 line-through ml-2">
+                ₹<?php echo number_format($price, 2); ?>
+            </span>
+            <span class="text-sm text-green-600 ml-2">
+                <?php echo htmlspecialchars($discount); ?>% Off
+            </span>
+        <?php endif; ?>
+    </div>
+
+    <!-- Features -->
+    <div class="mb-5">
+        <p class="text-gray-600 mb-2">Features:</p>
+        <ul class="list-disc pl-5 text-gray-600 space-y-1">
+            <?php 
+            if (!empty($product['features'])) {
+                $features = explode("\n", $product['features']); // store features in DB separated by newlines
+                foreach ($features as $f) {
+                    if (trim($f) !== '') {
+                        echo "<li>" . htmlspecialchars($f) . "</li>";
+                    }
+                }
+            } else {
+                echo "<li>No features available</li>";
+            }
+            ?>
+        </ul>
+    </div>
+
+    <!-- Quantity Selector -->
+    <div class="mb-6">
+        <label class="block text-sm font-medium text-gray-700 mb-2">Quantity:</label>
+        <div class="flex items-center">
+            <button type="button" class="quantity-btn bg-gray-200 hover:bg-gray-300 text-gray-700 px-3 py-1 rounded-l-lg" onclick="updateQuantity(-1)">
+                <i class="fas fa-minus"></i>
+            </button>
+            <input type="number" id="quantity" value="1" min="1" max="<?php echo $product['stock'] ?? 1; ?>" class="w-16 text-center border-t border-b border-gray-300 py-1" readonly>
+            <button type="button" class="quantity-btn bg-gray-200 hover:bg-gray-300 text-gray-700 px-3 py-1 rounded-r-lg" onclick="updateQuantity(1)">
+                <i class="fas fa-plus"></i>
+            </button>
+        </div>
+        <?php if (isset($product['stock']) && $product['stock'] <= 0): ?>
+            <p class="text-red-600 text-sm mt-1">Out of stock</p>
+        <?php endif; ?>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="flex gap-3">
+        <button id="add-to-favourite"
+            data-product-id="<?php echo $product['product_id']; ?>"
+            class="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-md transition favourite-btn">
+            <i class="fas fa-heart mr-2"></i> Favourite
+        </button>
+
+     
 
 
 
@@ -240,15 +281,14 @@ document.addEventListener("DOMContentLoaded", function () {
                     </div>
                 </div>
                 
-                <!-- Product Description -->
-                <div class="border-t border-gray-200 p-6">
-                    <h3 class="font-bold text-lg mb-3 text-gray-800">Product Description</h3>
-                    <p class="text-gray-600 mb-4">
-                    </p>
-                    <p class="text-gray-600">
-                    </p>
-                </div>
-            </div>
+               <!-- Product Description -->
+<div class="border-t border-gray-200 p-6">
+    <h3 class="font-bold text-lg mb-3 text-gray-800">Product Description</h3>
+    <p class="text-gray-600 mb-4">
+        <?php echo !empty($product['description']) ? nl2br(htmlspecialchars($product['description'])) : "No description available."; ?>
+    </p>
+</div>
+<hr>
             
             <!-- Order Summary -->
             <div class="lg:w-1/3">
@@ -258,7 +298,11 @@ document.addEventListener("DOMContentLoaded", function () {
                     <div class="space-y-3 mb-4">
                         <div class="flex justify-between text-gray-700">
                             <span>Subtotal</span>
-                            <span id="order-subtotal">$00.00</span>
+                            <span id="order-subtotal">$<?php echo number_format($product['price'], 2); ?></span>
+                            <script>
+                                const productPrice = <?php echo floatval($product['price']); ?>;
+                            </script>
+
                         </div>
                         <div class="flex justify-between text-gray-700">
                             <span>Discount</span>
@@ -284,7 +328,7 @@ $total = $product['price'] * $quantity;
                     </div>
                     
         <!-- Form with Hidden Input -->
-<form action="submitorder.php" method="POST" id="order-form">
+<form action="Payment/payment.php" method="POST" id="order-form">
     <input type="hidden" name="product_id" value="<?php echo $product['product_id']; ?>">
     <input type="hidden" name="quantity" id="hidden-quantity" value="1">
     <button type="submit" id="place-order" class="w-full bg-green-600 hover:bg-green-700 text-white py-3 rounded-md font-semibold transition">
@@ -365,30 +409,38 @@ document.getElementById('order-form').addEventListener('submit', function() {
             }
         });
         
-        // Update quantity
-        function updateQuantity(change) {
-            let newValue = parseInt(quantityInput.value) + change;
-            if (newValue < 1) newValue = 1;
-            quantityInput.value = newValue;
-            updateOrderSummary();
-        }
-        
-        // Update order summary
-        function updateOrderSummary() {
-            const price = 299.99;
-            const quantity = parseInt(quantityInput.value);
-            const subtotal = price * quantity;
-            
-            orderSubtotal.textContent = `$${subtotal.toFixed(2)}`;
-            orderTotal.textContent = `$${(subtotal - 50).toFixed(2)}`;
-        }
+// Update quantity
+function updateQuantity(change) {
+    let newValue = parseInt(quantityInput.value) + change;
+    if (newValue < 1) newValue = 1;
+    quantityInput.value = newValue;
+    hiddenInput.value = newValue; // sync with form
+    updateOrderSummary();
+}
+
+function updateOrderSummary() {
+    const quantity = parseInt(quantityInput.value);
+    const subtotal = productPrice * quantity;
+
+    // Update DOM
+    orderSubtotal.textContent = "₹" + subtotal.toFixed(2);
+    orderTotal.textContent = "₹" + subtotal.toFixed(2);
+
+    // Sync hidden input
+    hiddenInput.value = quantity;
+}
+
+// Run once on page load
+document.addEventListener("DOMContentLoaded", () => {
+    updateOrderSummary();
+});
         
         // Add to cart
         addToCartBtn.addEventListener('click', function() {
             const product = {
                 id: Date.now(),
                 name: "Premium Wireless Headphones",
-                price: 299.99,
+                price: product['price'],
                 image: "https://storage.googleapis.com/workspace-0f70711f-8b4e-4d94-86f1-2a93ccde5887/image/450d23b8-30f2-43b2-a1ad-feeb1d6827b8.png",
                 quantity: parseInt(quantityInput.value),
                 discount: 50.00
@@ -505,3 +557,8 @@ document.getElementById('order-form').addEventListener('submit', function() {
 </html>
 
 <?php mysqli_close($conn); ?>
+
+
+
+
+

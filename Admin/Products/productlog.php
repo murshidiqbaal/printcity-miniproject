@@ -20,6 +20,11 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $category = $_POST['category'];
     $price = $_POST['price'];
     $description = $_POST['description'];
+    $discount = isset($_POST['discount']) ? $_POST['discount'] : 0;
+    $stock = $_POST['stock'];
+    $isBestSeller = isset($_POST['is_best_seller']) ? 1 : 0;
+
+    
 
     // Handle image upload
     $imagePath = '';
@@ -41,8 +46,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     }
 
     // Prepare and execute SQL query
-    $stmt = $conn->prepare("INSERT INTO products (name, category, image_path, price, description) VALUES (?, ?, ?, ?, ?)");
-    $stmt->bind_param("sssds", $name, $category, $imagePath, $price, $description);
+    $stmt = $conn->prepare("INSERT INTO products (name, category, image_path, price, discount, stock, is_best_seller, description, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW())");
+    $stmt->bind_param("sssdsdss", $name, $category, $imagePath, $price, $discount, $stock, $isBestSeller, $description);
 
     if ($stmt->execute()) {
        header("Location: ./product.php");

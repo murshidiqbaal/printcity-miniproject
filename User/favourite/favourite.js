@@ -15,7 +15,7 @@ document.addEventListener("DOMContentLoaded", () => {
             },
             body: `product_id=${productId}`
         })
-        .then(response => response.text())
+        .then(res => res.text())
         .then(data => {
             console.log(data); // Debugging
             alert(data); // Optional popup message

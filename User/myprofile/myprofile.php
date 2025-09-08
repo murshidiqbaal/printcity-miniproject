@@ -296,7 +296,7 @@ $conn->close();
             <td>#ORD-<?php echo htmlspecialchars($order['order_id']); ?></td>
             <td><?php echo date("F j, Y", strtotime($order['order_date'])); ?></td>
             <td><?php echo htmlspecialchars($order['quantity']); ?> Item<?php echo $order['quantity'] > 1 ? 's' : ''; ?></td>
-            <td>$<?php echo number_format($order['total_price'], 2); ?></td>
+            <td>$<?php echo number_format((float)$order['total_price'], 2); ?></td>
             <td>
                 <?php
                 $status_class = '';

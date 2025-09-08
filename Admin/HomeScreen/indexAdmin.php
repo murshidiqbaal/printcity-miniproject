@@ -59,22 +59,22 @@ $total_revenue = $row_revenue['total_revenue'] ?? 0;
       <p>This is your admin dashboard. Use the navigation bar to switch between sections.</p>
 
       <div class="dashboard-cards">
-        <div class="card">
+        <div class="card" onclick="window.location.href='../Customers/customers.php'">
           <i class="fas fa-users"></i>
           <h3><?php echo number_format($total_users); ?></h3>
           <p>Total Users</p>
         </div>
-        <div class="card">
+        <div class="card" onclick="window.location.href='../Orders/orders.php'">
           <i class="fas fa-shopping-cart"></i>
           <h3><?php echo number_format($total_orders); ?></h3>
           <p>Total Orders</p>
         </div>
-        <div class="card">
+        <div class="card" onclick="window.location.href='../Products/product.php'">
           <i class="fas fa-box-open"></i>
           <h3><?php echo number_format($total_products); ?></h3>
           <p>Products Available</p>
         </div>
-        <div class="card">
+        <div class="card" onclick="window.location.href='../Revenue/revenue.php'">
           <i class="fas fa-dollar-sign"></i>
           <h3>₹<?php echo number_format($total_revenue); ?></h3>
           <p>Total Revenue</p>

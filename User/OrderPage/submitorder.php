@@ -35,8 +35,8 @@ if (!$user) {
     die("User not found.");
 }
 
-// Fetch product (optional: check if product exists)
-$stmt2 = $conn->prepare("SELECT * FROM products WHERE product_id = ?");
+// Fetch product
+$stmt2 = $conn->prepare("SELECT price FROM products WHERE product_id = ?");
 $stmt2->bind_param("i", $product_id);
 $stmt2->execute();
 $product_result = $stmt2->get_result();
@@ -46,22 +46,35 @@ if (!$product) {
     die("Product not found.");
 }
 
+// Calculate total price
+$total_price = $product['price'] * $quantity;
+
 // Prepare order data
 $customer_name = $user['full_name'];
 $address       = $user['address'];
 $order_date    = date("Y-m-d H:i:s");
 $status        = "Pending";
+$product_type  = "products"; // default
 
-// Insert order
+// Insert order with total_price
 $stmt = $conn->prepare("
     INSERT INTO orders 
-        (product_id, customer_name, address, quantity, order_date, status, user_id) 
-    VALUES (?, ?, ?, ?, ?, ?, ?)
+        (product_id, customer_name, address, quantity, order_date, status, user_id, total_price, product_type) 
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
 ");
-$stmt->bind_param("ississi", $product_id, $customer_name, $address, $quantity, $order_date, $status, $user_id);
+$stmt->bind_param("ississids", 
+    $product_id, 
+    $customer_name, 
+    $address, 
+    $quantity, 
+    $order_date, 
+    $status, 
+    $user_id, 
+    $total_price, 
+    $product_type
+);
 
 if ($stmt->execute()) {
-    // If successful, redirect to the current user's order page
     header("Location: ../myorder/myorder.php");
     exit();
 } else {
