@@ -28,10 +28,11 @@ $result = mysqli_query($conn, $sql);
     <ul>
       
       <li><a href="#products">Products</a></li>
-      <li><a href="#offers">Offers</a></li>
+      <li><a href="../ProductPage/carousel.php">Offers</a></li>
       <li><a href="../myorder/myorder.php">My Orders</a></li>
       <li><a href="../myprofile/myprofile.php">My Profile</a></li>
       <li><a href="../favourite/favourite.php">Favourites</a></li>
+
     </ul>
   </nav>
 </div>

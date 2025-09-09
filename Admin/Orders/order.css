@@ -1,0 +1,152 @@
+
+  /* Status badges with subtle shadows and smooth colors */
+  .status-badge {
+    padding: 6px 14px;
+    border-radius: 9999px;
+    font-size: 13px;
+    font-weight: 600;
+    box-shadow: 0 1px 3px rgb(0 0 0 / 0.1);
+    transition: background-color 0.3s ease, color 0.3s ease;
+    display: inline-block;
+    min-width: 80px;
+    text-align: center;
+  }
+  .status-pending {
+    background: #fef3c7;
+    color: #92400e;
+  }
+  .status-processing {
+    background: #e0e7ff;
+    color: #3730a3;
+  }
+  .status-shipped {
+    background: #d1fae5;
+    color: #065f46;
+  }
+  .status-delivered {
+    background: #dcfce7;
+    color: #166534;
+  }
+  .status-cancelled {
+    background: #fee2e2;
+    color: #991b1b;
+  }
+
+  /* Table improvements */
+  table {
+    border-collapse: separate;
+    border-spacing: 0 12px; /* space between rows */
+  }
+
+  thead tr th {
+    background: transparent;
+    padding-bottom: 12px;
+    border-bottom: 2px solid #e0e7ff;
+    position: sticky;
+    top: 0;
+    background-color: #f9fafb;
+    z-index: 10;
+  }
+
+  tbody tr.order-row {
+    background: white;
+    box-shadow: 0 4px 8px rgb(0 0 0 / 0.05);
+    border-radius: 12px;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    cursor: pointer;
+  }
+  tbody tr.order-row:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 20px rgb(0 0 0 / 0.12);
+    background-color: #f0f4ff;
+  }
+
+  tbody tr.order-row td {
+    padding-top: 18px;
+    padding-bottom: 18px;
+  }
+
+  /* Buttons */
+  button {
+    font-weight: 600;
+    transition: background-color 0.3s ease, color 0.3s ease;
+  }
+  button:hover {
+    color: #1e40af;
+  }
+
+  /* Modal backdrop blur and animation */
+  #statusModal {
+    backdrop-filter: blur(6px);
+    background-color: rgba(0, 0, 0, 0.3);
+  }
+  #statusModal > div.inline-block {
+    border-radius: 20px;
+    box-shadow: 0 20px 40px rgb(0 0 0 / 0.15);
+    animation: modalFadeIn 0.35s ease forwards;
+  }
+  @keyframes modalFadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(30px) scale(0.95);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+  }
+
+  /* Input and select focus */
+  input:focus, select:focus {
+    outline: none;
+    box-shadow: 0 0 0 3px #6366f1;
+    border-color: #6366f1;
+  }
+
+  /* Search input icon */
+  .fa-search {
+    color: #9ca3af;
+    transition: color 0.3s ease;
+  }
+  input:focus + div .fa-search {
+    color: #6366f1;
+  }
+
+  /* Pagination */
+  nav[aria-label="Pagination"] a {
+    border-radius: 8px;
+    padding: 8px 14px;
+    margin: 0 3px;
+    transition: background-color 0.3s ease, color 0.3s ease;
+  }
+  nav[aria-label="Pagination"] a:hover {
+    background-color: #e0e7ff;
+    color: #4338ca;
+  }
+  nav[aria-label="Pagination"] a[aria-current="page"] {
+    background-color: #4338ca;
+    color: white;
+    font-weight: 700;
+  }
+
+  /* Responsive tweaks */
+  @media (max-width: 768px) {
+    tbody tr.order-row {
+      display: block;
+      margin-bottom: 20px;
+      box-shadow: 0 4px 12px rgb(0 0 0 / 0.1);
+    }
+    tbody tr.order-row td {
+      display: flex;
+      justify-content: space-between;
+      padding: 12px 20px;
+      border-bottom: 1px solid #e5e7eb;
+    }
+    tbody tr.order-row td:last-child {
+      border-bottom: none;
+    }
+    thead {
+      display: none;
+    }
+  }
+

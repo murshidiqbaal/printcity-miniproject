@@ -37,7 +37,7 @@ $total_revenue = $row_revenue['total_revenue'] ?? 0;
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>PrintCity Dashboard</title>
-  <link rel="stylesheet" href="indexAdmin.css" />
+  <link rel="stylesheet" href="indexAdmin.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
 </head>
 <body>

@@ -6,7 +6,7 @@ if (!$conn) {
 }
 
 // Fetch all products
-$sql = "SELECT * FROM products LIMIT 6";
+$sql = "SELECT * FROM offer_products LIMIT 6";
 $result = mysqli_query($conn, $sql);
 
 ?>

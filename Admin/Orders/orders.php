@@ -6,45 +6,14 @@
     <title>Admin Orders Dashboard</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        .status-badge {
-            padding: 4px 8px;
-            border-radius: 12px;
-            font-size: 12px;
-            font-weight: 500;
-        }
-        .status-pending {
-            background-color: #FEF3C7;
-            color: #92400E;
-        }
-        .status-processing {
-            background-color: #E0E7FF;
-            color: #3730A3;
-        }
-        .status-shipped {
-            background-color: #D1FAE5;
-            color: #065F46;
-        }
-        .status-delivered {
-            background-color: #DCFCE7;
-            color: #166534;
-        }
-        .status-cancelled {
-            background-color: #FEE2E2;
-            color: #991B1B;
-        }
-        .order-row:hover {
-            background-color: #F9FAFB;
-        }
-        .animate-bounce-in {
-            animation: bounceIn 0.5s;
-        }
-        @keyframes bounceIn {
-            0% { transform: scale(0.95); opacity: 0; }
-            50% { transform: scale(1.02); opacity: 1; }
-            100% { transform: scale(1); }
-        }
-    </style>
+    <link rel="stylesheet" href="orders.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet" />
+<style>
+  body {
+    font-family: 'Poppins', sans-serif;
+  }
+</style>
+
 </head>
 <body class="bg-gray-50">
     <div class="min-h-screen bg-gray-50 p-6">
