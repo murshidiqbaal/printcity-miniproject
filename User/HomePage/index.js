@@ -52,3 +52,27 @@
     }
   }, 100);
 });
+
+        // Additional animation for elements on scroll
+        document.addEventListener('DOMContentLoaded', function() {
+            const frames = document.querySelectorAll('.frame');
+            
+            // Add random rotation to frames for more natural look
+            frames.forEach(frame => {
+                const randomRotate = (Math.random() * 6) - 3;
+                frame.style.transform = `rotate(${randomRotate}deg)`;
+            });
+            
+            // Add interactive animation to buttons
+            const buttons = document.querySelectorAll('.btn');
+            buttons.forEach(button => {
+                button.addEventListener('mouseenter', function() {
+                    this.style.transform = 'translateY(-3px)';
+                });
+                
+                button.addEventListener('mouseleave', function() {
+                    this.style.transform = 'translateY(0)';
+                });
+            });
+        });
+ 

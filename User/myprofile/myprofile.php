@@ -75,9 +75,26 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $country         = mysqli_real_escape_string($conn, $_POST['country']);
     $delivery_notes  = mysqli_real_escape_string($conn, $_POST['delivery_notes']);
     $payment_method  = mysqli_real_escape_string($conn, $_POST['payment_method']);
-    $profile_picture = mysqli_real_escape_string($conn, $_POST['profile_picture']);
 
-    // Check if user already has a profile
+    // Profile picture handling
+    $profile_picture = $user_data['profile_picture'] ?? ''; // keep old pic by default
+
+    
+    if (isset($_FILES['profile_picture']) && $_FILES['profile_picture']['error'] === UPLOAD_ERR_OK) {
+        $target_dir = "imgs/";
+        if (!is_dir($target_dir)) {
+            mkdir($target_dir, 0777, true); // create folder if missing
+        }
+
+        $file_name = time() . "_" . basename($_FILES["profile_picture"]["name"]);
+        $target_file = $target_dir . $file_name;
+
+        if (move_uploaded_file($_FILES["profile_picture"]["tmp_name"], $target_file)) {
+            $profile_picture = $file_name; // save only file name
+        }
+    }
+
+     // Check if user already has a profile
     $check = mysqli_query($conn, "SELECT id FROM user_profiles WHERE user_id = '$user_id' LIMIT 1");
 
     if (mysqli_num_rows($check) > 0) {
@@ -95,7 +112,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                     payment_method='$payment_method',
                     profile_picture='$profile_picture'
                 WHERE user_id='$user_id'";
-        $msg = "";
+        $msg = "Profile updated successfully!";
     } else {
         // INSERT new profile
         $sql = "INSERT INTO user_profiles 
@@ -111,6 +128,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         echo "Error: " . mysqli_error($conn);
     }
 }
+
 
 // Fetch user profile data to display in form
 $result = mysqli_query($conn, "SELECT * FROM user_profiles WHERE user_id = '$user_id' LIMIT 1");
@@ -164,9 +182,17 @@ $conn->close();
 
         <div class="profile-container">
             <div class="profile-sidebar">
-<img src="imgs/<?php echo htmlspecialchars($user_data['profile_picture'] ?? 'default.png'); ?>"
-     alt="Profile picture of <?php echo htmlspecialchars($user_data['full_name'] ?? '', ENT_QUOTES, 'UTF-8'); ?>"
+<?php
+$profile_picture = !empty($user_data['profile_picture']) 
+    ? "imgs/" . htmlspecialchars($user_data['profile_picture']) 
+    : "imgs/default.png"; // fallback image
+?>
+
+<img src="<?php echo $profile_picture; ?>" 
+     alt="Profile picture" 
      class="profile-picture">
+
+
 
 
 
@@ -204,6 +230,12 @@ $conn->close();
                         <div class="form-group">
                             <label class="form-label">Profile Picture</label>
                             <input type="file" name="profile_picture" class="form-control" accept="image/*">
+                            <?php if (!empty($profile['profile_picture'])): ?>
+                                <div style="margin-top:10px;">
+                                    <img src="imgs/<?php echo htmlspecialchars($profile['profile_picture']); ?>" alt="Current Profile Picture" style="max-width:80px;max-height:80px;border-radius:8px;">
+                                </div>
+                            <?php endif; ?>
+                            <small style="color: #888;">Accepted formats: JPG, PNG, GIF. Max size: 2MB.</small>
                         </div>
                     </div>
 

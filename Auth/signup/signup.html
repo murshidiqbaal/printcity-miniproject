@@ -3,30 +3,39 @@
 <head>
   <meta charset="UTF-8">
   <title>signup</title>
- <link rel="stylesheet" href="../AuthStyles.css">
+  <link rel="stylesheet" href="../AuthStyles.css">
 
-<script>
-document.addEventListener('keydown', function(event) {
-    // Example: Ctrl + Shift + A
-    if (event.ctrlKey && event.shiftKey && event.key === 'A') {
-        window.location.href = '../createadmin.php';
+  <script>
+    document.addEventListener('keydown', function(event) {
+      if (event.ctrlKey && event.shiftKey && event.key === 'A') {
+          window.location.href = '../createadmin.php';
+      }
+    });
+
+    function validateForm() {
+      const password = document.getElementById('password').value;
+      const confirmPassword = document.getElementById('confirm_password').value;
+
+      if (password !== confirmPassword) {
+        alert("Passwords do not match!");
+        return false;
+      }
+      return true;
     }
-});
-</script>
-
+  </script>
 </head>
 <body>
 
-  <form class="signup-box" action="signup.php" method="POST">
+  <form class="signup-box" action="signup.php" method="POST" onsubmit="return validateForm()">
     <h2>SignUp</h2>
-    <input type="text" name="username" placeholder="Username" required />
-    <input type="password" name="password" placeholder="Password" required />
+    <input type="text" name="identifier" placeholder="Email / Phone / Username" required />
+    <input type="password" name="password" id="password" placeholder="Password" required />
+    <input type="password" name="confirm_password" id="confirm_password" placeholder="Confirm Password" required />
     <button type="submit">Signup</button>
     <div class="footer-text">
       Already have an account? <a href="../login/login.html" >Log in</a>
     </div>
   </form>
- 
 
 </body>
 </html>

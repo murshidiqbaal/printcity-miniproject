@@ -2,21 +2,35 @@
 <html lang="en">
 <head>
  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-  <title>Login</title>
+ <title>Login</title>
  <link rel="stylesheet" href="../AuthStyles.css">
+
+ <!-- Google Platform Library -->
+ <script src="https://accounts.google.com/gsi/client" async defer></script>
+
+<script src="Auth/login/login.js"></script>
 </head>
 <body>
 
-  <form class="login-box" action="login.php" method="POST">
+  <form id="login-form" class="login-box" action="login.php" method="POST">
     <h2>Login</h2>
-    <input type="text" name="username" placeholder="Username" required />
+    <input type="text" name="username" placeholder="Username / Phone / Email" required>
     <input type="password" name="password" placeholder="Password" required />
     <button type="submit">Login</button>
+
     <div class="footer-text">
       Don't have an account? <a href="../signup/signup.html" >Sign up</a>
     </div>
+
+    <!-- Hidden inputs to hold Google user info -->
+    <!-- <input type="hidden" name="google_email" id="google_email" />
+    <input type="hidden" name="google_name" id="google_name" />
+    <input type="hidden" name="google_phone" id="google_phone" /> -->
   </form>
+
+  <div style="text-align:center; margin-top: 20px;">
+    <div id="googleSignInDiv"></div>
+  </div>
 
 </body>
 </html>
