@@ -12,6 +12,63 @@
   body {
     font-family: 'Poppins', sans-serif;
   }
+  
+  /* Status badge styles (add if not in orders.css) */
+  .status-badge {
+    padding: 0.25rem 0.5rem;
+    border-radius: 0.25rem;
+    font-size: 0.75rem;
+    font-weight: 500;
+  }
+  .status-pending { background-color: #fff3cd; color: #856404; }
+  .status-processing { background-color: #cce5ff; color: #004085; }
+  .status-shipped { background-color: #d1ecf1; color: #0c5460; }
+  .status-delivered { background-color: #d4edda; color: #155724; }
+  .status-cancelled { background-color: #f8d7da; color: #721c24; }
+
+  /* Tab container */
+.tab-container {
+    margin-bottom: 1rem;
+    border-bottom: 2px solid #e5e7eb; /* light gray */
+}
+
+/* Tab buttons container */
+.tab-buttons {
+    display: flex;
+    gap: 0.5rem;
+}
+
+/* Tab button default */
+.tab-btn {
+    padding: 0.5rem 1rem;
+    font-size: 0.875rem; /* text-sm */
+    font-weight: 500;
+    color: #4b5563; /* gray-700 */
+    background-color: transparent;
+    border: none;
+    border-bottom: 2px solid transparent;
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+    display: flex;
+    align-items: center;
+}
+
+/* Tab button hover */
+.tab-btn:hover {
+    color: #1f2937; /* gray-900 */
+}
+
+/* Active tab */
+.tab-btn.active {
+    color: #2563eb; /* blue-600 */
+    border-bottom-color: #2563eb; /* blue underline */
+}
+
+/* Icon spacing */
+.tab-btn i {
+    margin-right: 0.25rem; /* small spacing between icon and text */
+}
+
 </style>
 
 </head>
@@ -19,8 +76,22 @@
     <div class="min-h-screen bg-gray-50 p-6">
         <div class="bg-white p-4 mb-4 rounded-lg shadow">
             <h2 class="text-xl font-semibold text-gray-900">Order Management</h2>
+            <p class="text-sm text-gray-600 mt-1">Manage both product and custom orders</p>
         </div>
-        
+        <!-- Tab Navigation -->
+                <div class="tab-container">
+                    <div class="tab-buttons">
+                        <button id="all-tab" class="tab-btn active" data-tab="all">
+                            <i class="fas fa-list mr-1"></i> All Orders
+                        </button>
+                        <button id="product-tab" class="tab-btn" data-tab="product">
+                            <i class="fas fa-shopping-cart mr-1"></i> Product Orders
+                        </button>
+                        <button id="custom-tab" class="tab-btn" data-tab="custom">
+                            <i class="fas fa-file-upload mr-1"></i> Custom Orders
+                        </button>
+                    </div>
+                </div>
         <div class="overflow-auto">
             <div class="bg-white shadow rounded-lg overflow-hidden">
                 <div class="border-b border-gray-200 px-4 py-4 sm:px-6 flex flex-col md:flex-row md:items-center md:justify-between">
@@ -70,7 +141,8 @@ if (!$conn) {
     die("Connection failed: " . mysqli_connect_error());
 }
 
-$sql = "SELECT 
+// Fetch regular product orders
+$sql_regular = "SELECT 
             o.order_id,
             o.customer_name,
             o.address,
@@ -78,17 +150,55 @@ $sql = "SELECT
             p.name AS product_name,
             o.quantity,
             o.order_date,
-            o.status
+            o.status,
+            'regular' AS order_type
         FROM orders o
         JOIN products p ON o.product_id = p.product_id
         ORDER BY o.order_date DESC";
 
-$result = mysqli_query($conn, $sql);
+$result_regular = mysqli_query($conn, $sql_regular);
 
-if (mysqli_num_rows($result) > 0) {
-    while ($order = mysqli_fetch_assoc($result)) {
-        echo "<tr class='order-row'>
-                <td class='px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900'>{$order['order_id']}</td>
+// Fetch custom orders (join with user_profiles for customer details)
+$sql_custom = "SELECT 
+            co.id AS order_id,
+            up.full_name AS customer_name,
+            up.address,
+            co.file_path,
+            co.quantity,
+            co.print_type,
+            co.paper_size,
+            co.notes,
+            co.status,
+            co.order_date,
+            'custom' AS order_type
+        FROM custom_orders co
+        LEFT JOIN user_profiles up ON co.user_id = up.user_id
+        ORDER BY co.order_date DESC";
+
+$result_custom = mysqli_query($conn, $sql_custom);
+
+// Function to get file extension for custom orders
+function getFileExtension($file_path) {
+    if (empty($file_path)) return 'unknown';
+    return strtolower(pathinfo($file_path, PATHINFO_EXTENSION));
+}
+
+// Function to get display name for custom order product
+function getCustomProductDisplay($file_path, $print_type, $paper_size, $notes = '') {
+    $ext = getFileExtension($file_path);
+    $type_label = ucfirst(str_replace('_', ' ', $print_type ?? 'unknown')) . ' on ' . strtoupper($paper_size ?? 'A4');
+    $notes_preview = !empty($notes) ? ' - ' . substr($notes, 0, 30) . '...' : '';
+    return "Custom: " . strtoupper($ext) . " - " . $type_label . $notes_preview;
+}
+
+// Display regular orders first
+$has_orders = false;
+if (mysqli_num_rows($result_regular) > 0) {
+    $has_orders = true;
+    while ($order = mysqli_fetch_assoc($result_regular)) {
+        $status_lower = strtolower($order['status']);
+        echo "<tr class='order-row' data-type='regular'>
+                <td class='px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900'>#{$order['order_id']}</td>
                 <td class='px-6 py-4 whitespace-nowrap'>
                     <div class='text-sm text-gray-900'>" . htmlspecialchars($order['customer_name']) . "</div>
                     <div class='text-sm text-gray-500'>" . htmlspecialchars($order['address']) . "</div>
@@ -99,14 +209,46 @@ if (mysqli_num_rows($result) > 0) {
                 <td class='px-6 py-4 whitespace-nowrap text-sm text-gray-500'>{$order['quantity']}</td>
                 <td class='px-6 py-4 whitespace-nowrap text-sm text-gray-500'>" . date("Y-m-d", strtotime($order['order_date'])) . "</td>
                 <td class='px-6 py-4 whitespace-nowrap'>
-                    <span class='status-badge status-" . strtolower($order['status']) . "'>" . htmlspecialchars($order['status']) . "</span>
+                    <span class='status-badge status-" . $status_lower . "'>" . htmlspecialchars($order['status']) . "</span>
                 </td>
                 <td class='px-6 py-4 whitespace-nowrap text-right text-sm font-medium'>
-                    <button onclick=\"openStatusModal({$order['order_id']}, '{$order['status']}')\" class='text-indigo-600 hover:text-indigo-900 mr-2'>Update</button>
+                    <button onclick=\"openStatusModal({$order['order_id']}, '{$order['status']}', 'regular')\" class='text-indigo-600 hover:text-indigo-900 mr-2'>Update</button>
                 </td>
             </tr>";
     }
-} else {
+}
+
+// Display custom orders
+if (mysqli_num_rows($result_custom) > 0) {
+    $has_orders = true;
+    while ($custom_order = mysqli_fetch_assoc($result_custom)) {
+        $status_lower = strtolower($custom_order['status']);
+        $product_display = getCustomProductDisplay($custom_order['file_path'], $custom_order['print_type'], $custom_order['paper_size'], $custom_order['notes']);
+        $customer_name = !empty($custom_order['customer_name']) ? $custom_order['customer_name'] : 'Unknown User';
+        $customer_address = !empty($custom_order['address']) ? $custom_order['address'] : 'No address provided';
+        echo "<tr class='order-row' data-type='custom' style='background-color: #f8f9ff;'>
+                <td class='px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900'>C{$custom_order['order_id']}</td>
+                <td class='px-6 py-4 whitespace-nowrap'>
+                    <div class='text-sm text-gray-900'>" . htmlspecialchars($customer_name) . "</div>
+                    <div class='text-sm text-gray-500'>" . htmlspecialchars($customer_address) . "</div>
+                </td>
+                <td class='px-6 py-4 whitespace-nowrap'>
+                    <div class='text-sm text-gray-900 font-medium text-blue-600'>" . htmlspecialchars($product_display) . "</div>
+                    <small class='text-gray-500 block'>File: " . htmlspecialchars(basename($custom_order['file_path'])) . "</small>
+                </td>
+                <td class='px-6 py-4 whitespace-nowrap text-sm text-gray-500'>{$custom_order['quantity']}</td>
+                <td class='px-6 py-4 whitespace-nowrap text-sm text-gray-500'>" . date("Y-m-d", strtotime($custom_order['order_date'])) . "</td>
+                <td class='px-6 py-4 whitespace-nowrap'>
+                    <span class='status-badge status-" . $status_lower . "'>" . htmlspecialchars($custom_order['status']) . "</span>
+                </td>
+                <td class='px-6 py-4 whitespace-nowrap text-right text-sm font-medium'>
+                    <button onclick=\"openStatusModal({$custom_order['order_id']}, '{$custom_order['status']}', 'custom')\" class='text-indigo-600 hover:text-indigo-900 mr-2'>Update</button>
+                </td>
+            </tr>";
+    }
+}
+
+if (!$has_orders) {
     echo "<tr><td colspan='7' class='px-6 py-4 text-center text-gray-500'>No orders found</td></tr>";
 }
 
@@ -122,7 +264,7 @@ mysqli_close($conn);
                     <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
                         <div>
                             <p class="text-sm text-gray-700">
-                                Showing <span class="font-medium">1</span> to <span class="font-medium">2</span> of <span class="font-medium">2</span> results
+                                Showing <span class="font-medium">1</span> to <span class="font-medium"><?php echo mysqli_num_rows($result_regular) + mysqli_num_rows($result_custom); ?></span> of <span class="font-medium"><?php echo mysqli_num_rows($result_regular) + mysqli_num_rows($result_custom); ?></span> results
                             </p>
                         </div>
                         <div>
@@ -159,6 +301,7 @@ mysqli_close($conn);
                             <h3 class="text-lg leading-6 font-medium text-gray-900" id="modalTitle">Update Order Status</h3>
                             <div class="mt-4">
                                 <p class="text-sm text-gray-500">Order ID: <span id="modalOrderId" class="font-medium"></span></p>
+                                <p class="text-sm text-gray-500" id="modalOrderType" style="display: none;"></p> <!-- Hidden by default, shown if custom -->
                                 <div class="mt-4">
                                     <label for="statusSelect" class="block text-sm font-medium text-gray-700">New Status</label>
                                     <select id="statusSelect" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
@@ -198,51 +341,21 @@ mysqli_close($conn);
 
     <script>
         let currentOrderId = null;
+        let currentOrderType = null;
 
-        // Fetch orders from the API
-        async function fetchOrders() {
-            try {
-                const response = await fetch('/api/orders'); // Replace with your API endpoint
-                const orders = await response.json();
-                const ordersTable = document.getElementById('orders-table');
-                ordersTable.innerHTML = ''; // Clear existing rows
-
-                orders.forEach(order => {
-                    const row = document.createElement('tr');
-                    row.className = 'order-row';
-                    row.innerHTML = `
-                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${order.order_id}</td>
-                        <td class="px-6 py-4 whitespace-nowrap">
-                            <div class="text-sm text-gray-900">${order.customer_name}</div>
-                            <div class="text-sm text-gray-500">${order.address}</div>
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap">
-                            <div class="text-sm text-gray-900">Product #${order.product_id}</div>
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${order.quantity}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${new Date(order.order_date).toLocaleDateString()}</td>
-                        <td class="px-6 py-4 whitespace-nowrap">
-                            <span class="status-badge status-${order.status.toLowerCase()}">${order.status}</span>
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                            <button onclick="openStatusModal(${order.order_id}, '${order.status}')" class="text-indigo-600 hover:text-indigo-900 mr-2">Update</button>
-                        </td>
-                    `;
-                    ordersTable.appendChild(row);
-                });
-            } catch (error) {
-                console.error('Error fetching orders:', error);
-            }
-        }
-
-        // Call fetchOrders on page load
-        window.onload = fetchOrders;
-
-        // Open status modal
-        function openStatusModal(orderId, currentStatus) {
+        // Open status modal (updated to handle order type)
+        function openStatusModal(orderId, currentStatus, orderType) {
             currentOrderId = orderId;
+            currentOrderType = orderType || 'regular';
             document.getElementById('modalOrderId').textContent = orderId;
             document.getElementById('statusSelect').value = currentStatus;
+            const modalOrderType = document.getElementById('modalOrderType');
+            if (orderType === 'custom') {
+                modalOrderType.textContent = '(Custom Order)';
+                modalOrderType.style.display = 'block';
+            } else {
+                modalOrderType.style.display = 'none';
+            }
             document.getElementById('statusModal').classList.remove('hidden');
         }
 
@@ -251,64 +364,85 @@ mysqli_close($conn);
             document.getElementById('statusModal').classList.add('hidden');
         }
 
-        // Update order status
-       function updateOrderStatus() {
-    const orderId = document.getElementById('modalOrderId').innerText;
-    const newStatus = document.getElementById('statusSelect').value;
-
-    fetch('order_status.php', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: `order_id=${orderId}&status=${encodeURIComponent(newStatus)}`
-    })
-    .then(response => response.text())
-    .then(data => {
-        console.log(data); // check for "success" or error
-        closeStatusModal();
-        location.reload(); // refresh to see the updated status
-    })
-    .catch(error => console.error('Error:', error));
-}
-
-        // Hide notification
+        // Update order status (updated to send order type)
+        function updateOrderStatus() {
+            const orderId = document.getElementById('modalOrderId').innerText;
+            const newStatus = document.getElementById('statusSelect').value;
+            const orderType = currentOrderType || 'regular';
+            fetch('order_status.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ order_id: orderId, status: newStatus, order_type: orderType })
+            })
+            .then(response => response.json())
+            .then(data => { 
+                if (data.success) {
+                    // Update status badge in table
+                    const rows = document.querySelectorAll('#orders-table tr');
+                    rows.forEach(row => {
+                        const idCell = row.querySelector('td:first-child');
+                        if (idCell && idCell.textContent.replace('#', '').replace('C', '') == orderId) {
+                            const statusCell = row.querySelector('td:nth-child(6) span');
+                            if (statusCell) {
+                                statusCell.textContent = newStatus;
+                                statusCell.className = 'status-badge status-' + newStatus.toLowerCase();
+                            }
+                        }
+                    });
+                    showNotification('Order status updated successfully.');
+                } else {
+                    alert('Error updating status: ' + data.message);
+                }
+                closeStatusModal();
+            })
+            .catch(error => {
+                alert('Error updating status: ' + error);
+                closeStatusModal();
+            });
+        }
+        // Show success notification
+        function showNotification(message) {
+            const notification = document.getElementById('successNotification');
+            document.getElementById('notificationMessage').textContent = message;
+            notification.classList.remove('hidden');
+            setTimeout(() => {
+                notification.classList.add('hidden');
+            }, 3000);
+        }
+        // Hide notification on close icon click
         function hideNotification() {
             document.getElementById('successNotification').classList.add('hidden');
         }
-
         // Filter orders by status
         document.getElementById('status-filter').addEventListener('change', function() {
-            const status = this.value;
-            const rows = document.querySelectorAll('.order-row');
+            const selectedStatus = this.value;
+            const rows = document.querySelectorAll('#orders-table tr');
             rows.forEach(row => {
-                const rowStatus = row.querySelector('td:nth-child(6) span').textContent;
-                if (status === 'all' || rowStatus === status) {
-                    row.style.display = '';
-                } else {
-                    row.style.display = 'none';
+                const statusCell = row.querySelector('td:nth-child(6) span');
+                if (statusCell) {
+                    const statusText = statusCell.textContent;
+                    if (selectedStatus === 'all' || statusText === selectedStatus) {
+                        row.style.display = '';
+                    } else {
+                        row.style.display = 'none';
+                    }
                 }
             });
         });
-
-        // Search functionality
+        // Search orders
         document.getElementById('search').addEventListener('input', function() {
-            const searchTerm = this.value.toLowerCase();
-            const rows = document.querySelectorAll('.order-row');
+            const query = this.value.toLowerCase();
+            const rows = document.querySelectorAll('#orders-table tr');
             rows.forEach(row => {
-                const orderId = row.querySelector('td:first-child').textContent.toLowerCase();
-                const customer = row.querySelector('td:nth-child(2) div:first-child').textContent.toLowerCase();
-                if (orderId.includes(searchTerm) || customer.includes(searchTerm)) {
-                    row.style.display = '';
-                } else {
-                    row.style.display = 'none';
-                }
+                const cells = row.querySelectorAll('td');
+                let match = false;
+                cells.forEach(cell => {
+                    if (cell.textContent.toLowerCase().includes(query)) {
+                        match = true;
+                    }
+                });
+                row.style.display = match ? '' : 'none';
             });
-        });
-
-        // Close modal when clicking outside
-        document.getElementById('statusModal').addEventListener('click', function(e) {
-            if (e.target === this) {
-                closeStatusModal();
-            }
         });
     </script>
 </body>

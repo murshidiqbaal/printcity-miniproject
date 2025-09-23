@@ -1,28 +1,34 @@
 <?php
-// Database connection
-$conn = new mysqli("localhost", "root", "", "printcity");
+header('Content-Type: application/json');
 
-if ($conn->connect_error) {
-    die("Connection failed: " . $conn->connect_error);
+$conn = mysqli_connect("localhost", "root", "", "printcity");
+if (!$conn) {
+    echo json_encode(['success' => false, 'message' => 'Database connection failed']);
+    exit;
 }
 
-// Get POST data
-if (isset($_POST['order_id']) && isset($_POST['status'])) {
-    $order_id = intval($_POST['order_id']);
-    $status = $_POST['status'];
+// Get JSON input
+$data = json_decode(file_get_contents('php://input'), true);
+$order_id = intval($data['order_id'] ?? 0);
+$status = $data['status'] ?? '';
+$order_type = $data['order_type'] ?? 'regular';
 
-    $stmt = $conn->prepare("UPDATE orders SET status = ? WHERE order_id = ?");
+if ($order_type === 'regular') {
+    $stmt = $conn->prepare("UPDATE orders SET status=? WHERE order_id=?");
+} else {
+    $stmt = $conn->prepare("UPDATE custom_orders SET status=? WHERE id=?");
+}
+
+if ($stmt) {
     $stmt->bind_param("si", $status, $order_id);
-
     if ($stmt->execute()) {
-        echo "success";
+        echo json_encode(['success' => true]);
     } else {
-        echo "error";
+        echo json_encode(['success' => false, 'message' => 'Failed to update status']);
     }
-
     $stmt->close();
 } else {
-    echo "missing_data";
+    echo json_encode(['success' => false, 'message' => 'Failed to prepare statement']);
 }
 
 $conn->close();

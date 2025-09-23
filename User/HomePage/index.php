@@ -1,312 +1,439 @@
+<?php
+// Database connection
+$conn = mysqli_connect("localhost", "root", "", "printcity");
+if (!$conn) {
+    die("Connection failed: " . mysqli_connect_error());
+}
+
+// Fetch all products
+$sql = "SELECT * FROM products LIMIT 6";
+$result = mysqli_query($conn, $sql);
+?>
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PrintCity - Premium Prints & Frames</title>
-    <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
-    <!-- Font Awesome -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-    /* Reset & Base Styles */
-    * {
-        margin: 0;
-        padding: 0;
-        box-sizing: border-box;
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>PrintCity - Your Online Printshop</title>
+  <link rel="stylesheet" href="IndexStyles.css"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script src="index.js" defer></script>
+  <style>
+    /* Stunning Starter Animation Section */
+    .starter-animation {
+      position: relative;
+      height: 100vh;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      background: linear-gradient(135deg, #0f0f23 0%, #1a1a2e 50%, #16213e 100%);
+      color: white;
+      text-align: center;
+      z-index: 1;
     }
-    
-    :root {
-        --primary-color: rgb(57, 181, 198);
-        --secondary-color: rgb(233, 233, 229);
-        --text-color: rgb(0, 0, 0);
-        --accent-color: rgb(196, 196, 8);
-        --dark-bg: #0a0a0a;
-        --light-text: #ffffff;
-        --gray-text: #b0b0b0;
-        --card-bg: #1a1a1a;
+
+    .starter-animation::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: radial-gradient(circle at 20% 80%, rgba(120, 119, 198, 0.3) 0%, transparent 50%),
+                  radial-gradient(circle at 80% 20%, rgba(255, 119, 198, 0.3) 0%, transparent 50%),
+                  radial-gradient(circle at 40% 40%, rgba(120, 219, 255, 0.2) 0%, transparent 50%);
+      animation: backgroundShift 10s ease-in-out infinite;
     }
-    
-    body {
-        font-family: 'Inter', sans-serif;
-        background-color: var(--dark-bg);
-        color: var(--light-text);
-        line-height: 1.6;
-        overflow-x: hidden;
+
+    @keyframes backgroundShift {
+      0%, 100% { transform: scale(1) rotate(0deg); opacity: 1; }
+      50% { transform: scale(1.1) rotate(180deg); opacity: 0.8; }
     }
-    
-    /* Navigation */
-    .nav {
-        width: 100%;
-        height: 80px;
-        background: rgba(10, 10, 10, 0.95);
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        padding: 0 5%;
-        position: fixed;
-        top: 0;
-        z-index: 1000;
-        backdrop-filter: blur(10px);
-        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+
+    /* Animated Ink Splatters / Print Effects */
+    .print-effects {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      z-index: 0;
     }
-    
-    .logo {
-        display: flex;
-        align-items: center;
-        gap: 10px;
+
+    .ink-splat {
+      position: absolute;
+      border-radius: 50%;
+      background: linear-gradient(45deg, #ff6b6b, #4ecdc4, #45b7d1, #96ceb4);
+      animation: splat 4s ease-out infinite;
+      opacity: 0.1;
     }
-    
-    .logo img {
-        width: 40px;
-        height: 40px;
-        border-radius: 50%;
+
+    .ink-splat:nth-child(1) {
+      width: 200px;
+      height: 200px;
+      top: 20%;
+      left: 10%;
+      animation-delay: 0s;
     }
-    
+
+    .ink-splat:nth-child(2) {
+      width: 150px;
+      height: 150px;
+      top: 60%;
+      right: 20%;
+      animation-delay: 1s;
+      background: linear-gradient(45deg, #a8e6cf, #ffd93d, #ff6b6b);
+    }
+
+    .ink-splat:nth-child(3) {
+      width: 100px;
+      height: 100px;
+      bottom: 20%;
+      left: 50%;
+      animation-delay: 2s;
+      background: linear-gradient(45deg, #4ecdc4, #45b7d1);
+    }
+
+    @keyframes splat {
+      0% {
+        transform: scale(0) rotate(0deg);
+        opacity: 0.3;
+      }
+      50% {
+        transform: scale(1.2) rotate(180deg);
+        opacity: 0.1;
+      }
+      100% {
+        transform: scale(0) rotate(360deg);
+        opacity: 0;
+      }
+    }
+
+    /* Floating Paper Elements */
+    .paper-float {
+      position: absolute;
+      width: 60px;
+      height: 80px;
+      background: rgba(255, 255, 255, 0.05);
+      clip-path: polygon(0% 0%, 100% 0%, 100% 100%, 0% 100%);
+      animation: paperFloat 8s linear infinite;
+      z-index: 1;
+    }
+
+    .paper-float:nth-child(1) { left: 10%; animation-delay: 0s; }
+    .paper-float:nth-child(2) { left: 30%; animation-delay: 2s; width: 50px; height: 70px; }
+    .paper-float:nth-child(3) { left: 70%; animation-delay: 4s; }
+    .paper-float:nth-child(4) { left: 90%; animation-delay: 6s; width: 40px; height: 60px; }
+
+    @keyframes paperFloat {
+      0% {
+        transform: translateY(100vh) rotate(0deg);
+        opacity: 0;
+      }
+      10% {
+        opacity: 1;
+      }
+      90% {
+        opacity: 1;
+      }
+      100% {
+        transform: translateY(-100px) rotate(360deg);
+        opacity: 0;
+      }
+    }
+
+    .starter-animation .content {
+      position: relative;
+      z-index: 10;
+      max-width: 900px;
+      padding: 0 2rem;
+      animation: heroSlideIn 1.5s ease-out both;
+    }
+
+    @keyframes heroSlideIn {
+      from {
+        opacity: 0;
+        transform: translateY(60px) scale(0.95);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+    }
+
     .logo-text {
-        font-family: 'Poppins', sans-serif;
-        font-weight: 700;
-        font-size: 1.5rem;
-        color: var(--light-text);
+      font-size: 5rem;
+      font-weight: 900;
+      margin-bottom: 1.5rem;
+      background: linear-gradient(45deg, #fff, #ffd700, #ff6b6b);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      animation: textGlow 3s ease-in-out infinite alternate, typewriter 2s steps(20) 1s both;
+      letter-spacing: 0.2em;
+      text-shadow: 0 0 30px rgba(255, 255, 255, 0.5);
+      position: relative;
+      overflow: hidden;
     }
-    
-    .logo-text span {
-        color: var(--primary-color);
+
+    .logo-text::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      right: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.9), transparent);
+      animation: shine 2s infinite;
     }
-    
-    nav ul {
-        display: flex;
-        gap: 10px;
+
+    @keyframes textGlow {
+      from {
+        text-shadow: 0 0 20px rgba(255, 255, 255, 0.5), 0 0 40px rgba(255, 215, 0, 0.3);
+      }
+      to {
+        text-shadow: 0 0 30px rgba(255, 255, 255, 0.8), 0 0 60px rgba(255, 107, 107, 0.5);
+      }
     }
-    
-    nav li {
-        list-style: none;
+
+    @keyframes typewriter {
+      from { width: 0; }
+      to { width: 100%; }
     }
-    
-    nav li a {
-        text-decoration: none;
-        color: var(--gray-text);
-        font-family: 'Poppins', sans-serif;
-        font-size: 0.9rem;
-        padding: 10px 20px;
-        border-radius: 30px;
-        transition: all 0.3s ease;
+
+    @keyframes shine {
+      0% { transform: translateX(-100%) scaleX(0); }
+      50% { transform: translateX(100%) scaleX(1); }
+      100% { transform: translateX(100%) scaleX(0); }
     }
-    
-    nav li a:hover, nav li.active a {
-        background: var(--primary-color);
-        color: var(--light-text);
+
+    .starter-animation .text h1 {
+      font-size: 4rem;
+      margin-bottom: 1rem;
+      animation: fadeInUp 1s ease-out 1.5s both, bounceIn 1s ease-out 1.5s both;
+      position: relative;
     }
-    
-    .nav-cta {
-        background: var(--accent-color);
-        color: var(--dark-bg) !important;
-        font-weight: 600;
+
+    .starter-animation .text p {
+      font-size: 1.6rem;
+      margin-bottom: 2.5rem;
+      opacity: 0.95;
+      animation: fadeInUp 1s ease-out 2s both;
+      max-width: 600px;
+      margin-left: auto;
+      margin-right: auto;
     }
-    
-    .nav-cta:hover {
-        background: #d4d40a !important;
-        transform: translateY(-2px);
+
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(40px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
     }
-    
-    /* Hero Section */
-    .hero {
-        min-height: 100vh;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        position: relative;
-        overflow: hidden;
-        padding: 0 5%;
-        margin-top: 80px;
+
+    @keyframes bounceIn {
+      0% { transform: scale(0.3); opacity: 0; }
+      50% { transform: scale(1.05); }
+      70% { transform: scale(0.9); }
+      100% { transform: scale(1); opacity: 1; }
     }
+
+    .logo {
+      width: 180px;
+      height: 180px;
+      margin: 0 auto 3rem;
+      animation: logoSpinIn 2s cubic-bezier(0.68, -0.55, 0.265, 1.55) 0.5s both;
+      filter: drop-shadow(0 20px 40px rgba(0, 0, 0, 0.3));
+    }
+
+    @keyframes logoSpinIn {
+      0% {
+        opacity: 0;
+        transform: scale(0) rotate(-180deg);
+      }
+      60% {
+        transform: scale(1.1) rotate(20deg);
+      }
+      100% {
+        opacity: 1;
+        transform: scale(1) rotate(0deg);
+      }
+    }
+
+    .logo img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      border-radius: 20px;
+      border: 4px solid rgba(255, 255, 255, 0.2);
+      transition: all 0.3s ease;
+    }
+
+    .logo:hover img {
+      border-color: rgba(255, 255, 255, 0.5);
+      transform: rotateY(10deg);
+    }
+
+    .cta-button {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 1.2rem 2.5rem;
+      background: linear-gradient(45deg, #ff6b6b, #ee5a24, #ff6b6b);
+      background-size: 200% 200%;
+      color: white;
+      text-decoration: none;
+      border-radius: 50px;
+      font-weight: bold;
+      font-size: 1.3rem;
+      transition: all 0.4s ease;
+      box-shadow: 0 10px 30px rgba(255, 107, 107, 0.4);
+      animation: ctaPulse 2s infinite, gradientShift 3s ease infinite;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .cta-button::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+      transition: left 0.5s;
+    }
+
+    .cta-button:hover::before {
+      left: 100%;
+    }
+
+    .cta-button:hover {
+      transform: translateY(-5px) scale(1.05);
+      box-shadow: 0 20px 50px rgba(255, 107, 107, 0.6);
+      animation: none;
+    }
+
+    @keyframes ctaPulse {
+      0% { box-shadow: 0 0 0 0 rgba(255, 107, 107, 0.7); }
+      70% { box-shadow: 0 0 0 20px rgba(255, 107, 107, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(255, 107, 107, 0); }
+    }
+
+    @keyframes gradientShift {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+
+    /* Print-Themed Icons Animation */
+    .print-icons {
+      position: absolute;
+      bottom: 2rem;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 2rem;
+      animation: iconsFloat 3s ease-in-out infinite;
+    }
+
+    .print-icon {
+      font-size: 2rem;
+      color: rgba(255, 255, 255, 0.6);
+      animation: iconBounce 2s ease-in-out infinite;
+    }
+
+    .print-icon:nth-child(1) { animation-delay: 0s; }
+    .print-icon:nth-child(2) { animation-delay: 0.5s; }
+    .print-icon:nth-child(3) { animation-delay: 1s; }
+
+    @keyframes iconsFloat {
+      0%, 100% { transform: translateX(-50%) translateY(0px); }
+      50% { transform: translateX(-50%) translateY(-10px); }
+    }
+
+    @keyframes iconBounce {
+      0%, 100% { transform: translateY(0px); }
+      50% { transform: translateY(-15px); }
+    }
+
     
-    .hero-content {
-        max-width: 1200px;
+    
+    @media (max-width: 768px) {
+      .logo-text { font-size: 3rem; }
+      .starter-animation .text h1 { font-size: 2.8rem; }
+      .starter-animation .text p { font-size: 1.3rem; }
+      .logo { width: 120px; height: 120px; }
+      .cta-button { padding: 1rem 2rem; font-size: 1.1rem; }
+      .print-icons { gap: 1rem; bottom: 1rem; }
+      .print-icon { font-size: 1.5rem; }
+      .stack-area { flex-direction: column; text-align: center; padding: 4rem 1rem; }
+      .ink-splat { display: none; } /* Hide on mobile for performance */
+    }
+
+
+      .stack-area {
         width: 100%;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 40px;
-    }
-    
-    .hero-text {
-        flex: 1;
-        animation: fadeInUp 1s ease-out;
-    }
-    
-    .hero-title {
-        font-family: 'Poppins', sans-serif;
-        font-size: 3.5rem;
-        font-weight: 800;
-        line-height: 1.2;
-        margin-bottom: 20px;
-        background: linear-gradient(to right, var(--light-text), var(--primary-color));
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-    }
-    
-    .hero-subtitle {
-        font-size: 1.2rem;
-        color: var(--gray-text);
-        margin-bottom: 30px;
-        max-width: 500px;
-    }
-    
-    .hero-cta {
-        display: flex;
-        gap: 15px;
-    }
-    
-    .btn {
-        padding: 15px 30px;
-        border-radius: 50px;
-        font-weight: 600;
-        font-size: 1rem;
-        text-transform: uppercase;
-        letter-spacing: 1px;
-        transition: all 0.3s ease;
-        cursor: pointer;
-        text-decoration: none;
-        display: inline-block;
-    }
-    
-    .btn-primary {
-        background: var(--primary-color);
-        color: var(--dark-bg);
-        border: none;
-    }
-    
-    .btn-primary:hover {
-        background: #3fb9cc;
-        transform: translateY(-3px);
-        box-shadow: 0 6px 20px rgba(57, 181, 198, 0.4);
-    }
-    
-    .btn-secondary {
-        background: transparent;
-        color: var(--light-text);
-        border: 2px solid var(--primary-color);
-    }
-    
-    .btn-secondary:hover {
-        background: rgba(57, 181, 198, 0.1);
-        transform: translateY(-3px);
-    }
-    
-    .hero-visual {
-        flex: 1;
+        height: 500vh;
         position: relative;
-        height: 500px;
+        background: rgb(196, 196, 8);
         display: flex;
-        align-items: center;
-        justify-content: center;
-    }
-    
-    .floating-frame {
-        position: absolute;
-        border-radius: 15px;
-        overflow: hidden;
-        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
-        transition: transform 0.5s ease;
-    }
-    
-    .floating-frame img {
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-    }
-    
-    .frame-1 {
-        width: 250px;
-        height: 300px;
-        top: 50px;
-        left: 0;
-        transform: rotate(-5deg);
-        z-index: 3;
-        animation: float 8s ease-in-out infinite;
-    }
-    
-    .frame-2 {
-        width: 280px;
-        height: 200px;
-        top: 150px;
-        right: 50px;
-        transform: rotate(3deg);
-        z-index: 2;
-        animation: float 10s ease-in-out infinite 1s;
-    }
-    
-    .frame-3 {
-        width: 220px;
-        height: 280px;
-        bottom: 50px;
-        left: 80px;
-        transform: rotate(-3deg);
-        z-index: 1;
-        animation: float 12s ease-in-out infinite 2s;
-    }
-    
-    /* Stack Area */
-    .stack-area {
-        width: 100%;
-        min-height: 100vh;
-        position: relative;
-        background: var(--secondary-color);
-        display: flex;
-        padding: 100px 5%;
-    }
-    
-    .left {
-        height: 100%;
+      }
+      .left {
+        height: 100vh;
         flex-basis: 50%;
         position: sticky;
-        top: 100px;
+        top: 0;
+        left: 0;
         display: flex;
-        flex-direction: column;
+        align-items: center;
         justify-content: center;
-        color: var(--text-color);
-    }
-    
-    .title {
-        font-family: 'Poppins', sans-serif;
-        font-size: 3.5rem;
-        font-weight: 700;
-        line-height: 1.2;
-        margin-bottom: 20px;
-    }
-    
-    .sub-title {
-        font-size: 1.1rem;
-        margin-bottom: 30px;
-        max-width: 420px;
-    }
-    
-    .stack-btn {
-        padding: 15px 30px;
-        background: var(--dark-bg);
-        color: var(--light-text);
-        border-radius: 50px;
-        border: none;
-        font-family: 'Poppins', sans-serif;
-        font-size: 1rem;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        width: fit-content;
-    }
-    
-    .stack-btn:hover {
-        background: #333;
-        transform: translateY(-3px);
-        box-shadow: 0 6px 15px rgba(0, 0, 0, 0.2);
-    }
-    
-    .right {
+        box-sizing: border-box;
+        align-items: center;
+        flex-direction: column;
+      }
+      .right {
+        height: 100vh;
         flex-basis: 50%;
-        position: relative;
-    }
-    
-    .card {
+        position: sticky;
+        top: 0;
+      }
+     
+      .title {
+        width: 420px;
+        font-size: 84px;
+        font-family: poppins;
+        font-weight: 700;
+        line-height: 88px;
+      }
+      .sub-title {
+        width: 420px;
+        font-family: poppins;
+        font-size: 14px;
+        margin-top: 30px;
+      }
+      .sub-title button {
+        font-family: poppins;
+        font-size: 14px;
+        padding: 15px 30px;
+        background: black;
+        color: white;
+        border-radius: 8mm;
+        border: none;
+        outline: none;
+        cursor: pointer;
+        margin-top: 20px;
+      }
+
+      .card {
         width: 350px;
         height: 350px;
         border-radius: 25px;
@@ -315,458 +442,154 @@
         top: calc(50% - 175px);
         left: calc(50% - 175px);
         transition: 0.5s ease-in-out;
-        box-sizing: border-box;
+           box-sizing: border-box;
         padding: 35px;
         display: flex;
         justify-content: space-between;
         flex-direction: column;
-        color: var(--light-text);
-        box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
-    }
+      }
+      .card:nth-child(1) {
+        background: rgb(64, 122, 255);
+      }
+      .card:nth-child(2) {
+        background: rgb(221, 62, 88);
+      }
+      .card:nth-child(3) {
+        background: rgb(186, 113, 245);
+      }
+      .card:nth-child(4) {
+        background: rgb(247, 92, 208);
+      }
+       .card:nth-child(5) {
+        background: rgb(54, 161, 88);
+      }
+
     
-    .card:nth-child(1) {
-        background: linear-gradient(135deg, #407AFF, #7040FF);
-    }
-    
-    .card:nth-child(2) {
-        background: linear-gradient(135deg, #DD3E58, #FF4069);
-    }
-    
-    .card:nth-child(3) {
-        background: linear-gradient(135deg, #BA71F5, #8A2FE0);
-    }
-    
-    .card:nth-child(4) {
-        background: linear-gradient(135deg, #F75CD0, #D42A9C);
-    }
-    
-    .card:nth-child(5) {
-        background: linear-gradient(135deg, #36A158, #2D8C4F);
-    }
-    
-    .card-icon {
-        font-size: 2.5rem;
-        margin-bottom: 15px;
-    }
-    
-    .sub {
-        font-family: 'Poppins', sans-serif;
-        font-size: 1.2rem;
-        font-weight: 600;
-    }
-    
-    .content {
-        font-family: 'Poppins', sans-serif;
-        font-size: 2.5rem;
+      .sub {
+        font-family: poppins;
+        font-size: 20px;
         font-weight: 700;
-        line-height: 1.2;
-    }
-    
-    .away {
+      }
+      .content {
+        font-family: poppins;
+        font-size: 44px;
+        font-weight: 700;
+        line-height: 54px;
+      }
+     
+      .away {
         transform-origin: bottom left;
-    }
-    
-    /* Features Section */
-    .features {
-        padding: 100px 5%;
-        background: var(--dark-bg);
-        text-align: center;
-    }
-    
-    .section-title {
-        font-family: 'Poppins', sans-serif;
-        font-size: 2.5rem;
-        font-weight: 700;
-        margin-bottom: 20px;
-        text-align: center;
-    }
-    
-    .section-subtitle {
-        font-size: 1.1rem;
-        color: var(--gray-text);
-        max-width: 600px;
-        margin: 0 auto 50px;
-        text-align: center;
-    }
-    
-    .features-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-        gap: 30px;
-        max-width: 1200px;
-        margin: 0 auto;
-    }
-    
-    .feature-card {
-        background: var(--card-bg);
-        border-radius: 20px;
-        padding: 40px 30px;
-        text-align: center;
-        transition: transform 0.3s ease;
-    }
-    
-    .feature-card:hover {
-        transform: translateY(-10px);
-    }
-    
-    .feature-icon {
-        font-size: 2.5rem;
-        color: var(--primary-color);
-        margin-bottom: 20px;
-    }
-    
-    .feature-title {
-        font-family: 'Poppins', sans-serif;
-        font-size: 1.5rem;
-        font-weight: 600;
-        margin-bottom: 15px;
-    }
-    
-    .feature-desc {
-        color: var(--gray-text);
-    }
-    
-    /* Footer */
-    footer {
-        width: 100%;
-        background: #050505;
-        padding: 60px 5% 30px;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-    }
-    
-    .footer-content {
-        max-width: 1200px;
-        width: 100%;
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-        gap: 40px;
-        margin-bottom: 40px;
-    }
-    
-    .footer-col h3 {
-        font-family: 'Poppins', sans-serif;
-        font-size: 1.2rem;
-        margin-bottom: 20px;
-        color: var(--light-text);
-    }
-    
-    .footer-col p, .footer-col a {
-        color: var(--gray-text);
-        margin-bottom: 10px;
-        display: block;
-        text-decoration: none;
-        transition: color 0.3s ease;
-    }
-    
-    .footer-col a:hover {
-        color: var(--primary-color);
-    }
-    
-    .social-icons {
-        display: flex;
-        gap: 15px;
-        margin-top: 20px;
-    }
-    
-    .social-icons a {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        width: 40px;
-        height: 40px;
-        border-radius: 50%;
-        background: var(--card-bg);
-        color: var(--light-text);
-        transition: all 0.3s ease;
-    }
-    
-    .social-icons a:hover {
-        background: var(--primary-color);
-        transform: translateY(-3px);
-    }
-    
-    .copyright {
-        text-align: center;
-        color: var(--gray-text);
-        padding-top: 30px;
-        border-top: 1px solid rgba(255, 255, 255, 0.1);
-        width: 100%;
-        max-width: 1200px;
-    }
-    
-    /* Animations */
-    @keyframes float {
-        0% { transform: translateY(0) rotate(0deg); }
-        50% { transform: translateY(-20px) rotate(3deg); }
-        100% { transform: translateY(0) rotate(0deg); }
-    }
-    
-    @keyframes fadeInUp {
-        from {
-            opacity: 0;
-            transform: translateY(50px);
-        }
-        to {
-            opacity: 1;
-            transform: translateY(0);
-        }
-    }
-    
-    @keyframes fadeInLogo {
-        from { opacity: 0; transform: scale(0.95); }
-        to { opacity: 1; transform: scale(1); }
-    }
-    
-    @keyframes fadeInText {
-        from { opacity: 0; transform: translateY(-10px); }
-        to { opacity: 1; transform: translateY(0); }
-    }
-    
-    @keyframes fadeInMainText {
-        to { opacity: 1; }
-    }
-    
-    /* Responsive Styles */
-    @media (max-width: 1024px) {
-        .hero-content {
-            flex-direction: column;
-            text-align: center;
-        }
-        
-        .hero-title {
-            font-size: 2.8rem;
-        }
-        
-        .hero-cta {
-            justify-content: center;
-        }
-        
-        .stack-area {
-            flex-direction: column;
-        }
-        
-        .left {
-            position: relative;
-            top: 0;
-            margin-bottom: 50px;
-            text-align: center;
-            align-items: center;
-        }
-        
-        .right {
-            height: 600px;
-        }
-    }
-    
-    @media (max-width: 768px) {
-        .nav {
-            padding: 0 20px;
-        }
-        
-        nav ul {
-            display: none;
-        }
-        
-        .hero-title {
-            font-size: 2.2rem;
-        }
-        
-        .title {
-            font-size: 2.5rem;
-        }
-        
-        .floating-frame {
-            width: 200px !important;
-            height: 250px !important;
-        }
-        
-        .frame-1 {
-            top: 20px;
-            left: 10px;
-        }
-        
-        .frame-2 {
-            top: 100px;
-            right: 10px;
-        }
-        
-        .frame-3 {
-            bottom: 20px;
-            left: 50px;
-        }
-    }
-    
-    @media (max-width: 480px) {
-        .hero-title {
-            font-size: 2rem;
-        }
-        
-        .hero-subtitle {
-            font-size: 1rem;
-        }
-        
-        .btn {
-            padding: 12px 25px;
-            font-size: 0.9rem;
-        }
-        
-        .title {
-            font-size: 2rem;
-        }
-        
-        .sub-title {
-            font-size: 1rem;
-        }
-        
-        .card {
-            width: 280px;
-            height: 280px;
-            left: calc(50% - 140px);
-            top: calc(50% - 140px);
-            padding: 25px;
-        }
-        
-        .content {
-            font-size: 2rem;
-        }
-    }
-    </style>
+      }
+  </style>
 </head>
 <body>
-    <!-- Navigation -->
-    <div class="nav">
-        <div class="logo">
-            <img src="https://storage.googleapis.com/workspace-0f70711f-8b4e-4d94-86f1-2a93ccde5887/image/50edd432-a426-434c-91f5-6914e448d666.png" alt="PrintCity Logo">
-            <div class="logo-text">Print<span>City</span></div>
-        </div>
+  <header>
+   <div class="nav">
         <nav>
             <ul>
                 <li class="active"><a href="#">Home</a></li>
-                <li><a href="#">Prints</a></li>
-                <li><a href="#">Frames</a></li>
-                <li><a href="#">Gallery</a></li>
-                <li><a href="#">About</a></li>
-                <li><a href="#" class="nav-cta">Order Now</a></li>
+                <li><a href="../myorder/myorder.php">MyOrders</a></li>
+                <li><a href="../favourite/favourite.php">Favourites</a></li>
+                <li><a href="../myprofile/myprofile.php">MyProfile</a></li>
+                <li><a href="#footer-content">About</a></li>
+                <li><a href="../customization/custom_orders.php">Print</a></li>
+                <li><a href="#products" class="nav-cta">Order Now</a></li>
+                
             </ul>
         </nav>
     </div>
-    
-    <!-- Hero Section -->
-    <section class="hero">
-        <div class="hero-content">
-            <div class="hero-text">
-                <h1 class="hero-title">Transform Your Memories Into Art</h1>
-                <p class="hero-subtitle">Premium quality prints and custom frames to preserve your precious moments. Fast shipping and exceptional customer service.</p>
-                <div class="hero-cta">
-                    <a href="#" class="btn btn-primary">Create Your Print</a>
-                    <a href="#" class="btn btn-secondary">Browse Frames</a>
-                </div>
-            </div>
-            <div class="hero-visual">
-                <div class="floating-frame frame-1">
-                    <img src="https://images.unsplash.com/photo-1578662996442-48f60103fc96?ixlib=rb-1.2.1&auto=format&fit=crop&w=400&h=500&q=80" alt="Modern art print in a minimalist frame">
-                </div>
-                <div class="floating-frame frame-2">
-                    <img src="https://images.unsplash.com/photo-1579546929662-711aa81148cf?ixlib=rb-1.2.1&auto=format&fit=crop&w=400&h=300&q=80" alt="Colorful abstract print in a contemporary frame">
-                </div>
-                <div class="floating-frame frame-3">
-                    <img src="https://images.unsplash.com/photo-1544787219-7f47ccb76574?ixlib=rb-1.2.1&auto=format&fit=crop&w=400&h=500&q=80" alt="Landscape photography in a classic wooden frame">
-                </div>
-            </div>
+   </header>
+
+  <!-- Stunning Animated Starter Section -->
+  <section class="starter-animation">
+    <!-- Print Effects Background -->
+    <div class="print-effects">
+      <div class="ink-splat"></div>
+      <div class="ink-splat"></div>
+      <div class="ink-splat"></div>
+    </div>
+
+    <!-- Floating Paper Elements -->
+    <div class="paper-float"></div>
+    <div class="paper-float"></div>
+    <div class="paper-float"></div>
+    <div class="paper-float"></div>
+
+    <div class="content">
+      <div class="logo-text">Here You Go...</div>
+      
+      <div class="text">
+        <h1>Welcome to PrintCity</h1>
+        <p>Your one-stop destination for all printing <br> we bring your ideas to life with precision and creativity.</p>
+        <a href="../customization/custom_orders.php" class="cta-button">
+          <i class="fas fa-rocket"></i> Start Printing Now
+        </a>
+      </div>
+      
+      <div class="logo">
+        <img src="../../assets/logo.png" alt="PrintCity Logo" />
+      </div>
+
+      <!-- Print-Themed Icons -->
+      <div class="print-icons">
+        <div class="print-icon"><i class="fas fa-print"></i></div>
+        <div class="print-icon"><i class="fas fa-image"></i></div>
+        <div class="print-icon"><i class="fas fa-palette"></i></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Stack Area -->
+
+ <div class="stack-area">
+      <div class="left">
+        <div class="title">Print City</div>
+        <div class="sub-title">
+         One-stop destination for all printing needs, offering high-quality and customized printing services for businesses, students, and individuals. Whether you need brochures, business cards, banners, flyers, or personalized gifts, PrintCity delivers professional results with quick turnaround times. We combine the latest printing technology with creative design to bring your ideas to life, ensuring every print is sharp, vibrant, and impactful. At PrintCity, customer satisfaction is our top priority, and we are committed to providing affordable prices, friendly service, and reliable solutions for every project.
+          <br />
+          <button>See More Details</button>
         </div>
-    </section>
-    
-    <!-- Stack Area -->
-    <section class="stack-area">
-        <div class="left">
-            <h2 class="title">Why Choose PrintCity?</h2>
-            <p class="sub-title">We combine exceptional quality with innovative technology to deliver prints that truly stand out. Our team of experts ensures every detail is perfect.</p>
-            <button class="stack-btn">Explore Our Process</button>
+      </div>
+      <div class="right">
+        <div class="card">
+          <div class="sub">Posters</div>
+          <div class="content">Attractive posters</div>
         </div>
-        <div class="right">
-            <div class="card">
-                <div class="card-icon">🖼️</div>
-                <div class="sub">Premium Quality</div>
-                <div class="content">Archival Grade Materials</div>
-            </div>
-            <div class="card away">
-                <div class="card-icon">🚚</div>
-                <div class="sub">Fast Shipping</div>
-                <div class="content">Worldwide Delivery</div>
-            </div>
-            <div class="card away">
-                <div class="card-icon">✨</div>
-                <div class="sub">Custom Designs</div>
-                <div class="content">Tailored to You</div>
-            </div>
-            <div class="card away">
-                <div class="card-icon">🛡️</div>
-                <div class="sub">Satisfaction</div>
-                <div class="content">100% Guaranteed</div>
-            </div>
-            <div class="card away">
-                <div class="card-icon">🏆</div>
-                <div class="sub">Award Winning</div>
-                <div class="content">Industry Recognition</div>
-            </div>
+        <div class="card">
+          <div class="sub">Greeting Cards</div>
+          <div class="content">All cards</div>
         </div>
-    </section>
-    
-    <!-- Features Section -->
-    <section class="features">
-        <h2 class="section-title">Our Services</h2>
-        <p class="section-subtitle">From custom framing to professional printing, we offer a wide range of services to meet all your needs.</p>
-        
-        <div class="features-grid">
-            <div class="feature-card">
-                <div class="feature-icon"><i class="fas fa-print"></i></div>
-                <h3 class="feature-title">Professional Printing</h3>
-                <p class="feature-desc">High-quality prints with vibrant colors and sharp details on various materials.</p>
-            </div>
-            
-            <div class="feature-card">
-                <div class="feature-icon"><i class="fas fa-border-all"></i></div>
-                <h3 class="feature-title">Custom Framing</h3>
-                <p class="feature-desc">Handcrafted frames designed to complement and protect your artwork.</p>
-            </div>
-            
-            <div class="feature-card">
-                <div class="feature-icon"><i class="fas fa-paint-brush"></i></div>
-                <h3 class="feature-title">Art Restoration</h3>
-                <p class="feature-desc">Expert restoration services to preserve and enhance your valuable artwork.</p>
-            </div>
-            
-            <div class="feature-card">
-                <div class="feature-icon"><i class="fas fa-shipping-fast"></i></div>
-                <h3 class="feature-title">Fast Delivery</h3>
-                <p class="feature-desc">Quick and secure shipping options to get your prints to you safely.</p>
-            </div>
-            
-            <div class="feature-card">
-                <div class="feature-icon"><i class="fas fa-hands-helping"></i></div>
-                <h3 class="feature-title">Consultation</h3>
-                <p class="feature-desc">Professional advice on choosing the right options for your specific needs.</p>
-            </div>
-            
-            <div class="feature-card">
-                <div class="feature-icon"><i class="fas fa-certificate"></i></div>
-                <h3 class="feature-title">Quality Guarantee</h3>
-                <p class="feature-desc">We stand behind our work with a comprehensive satisfaction guarantee.</p>
-            </div>
+        <div class="card">
+          <div class="sub">Adhaar Card</div>
+          <div class="content">Duplicates</div>
         </div>
-    </section>
-    
-    <!-- Footer -->
+        <div class="card">
+          <div class="sub">Prints</div>
+          <div class="content">Now its 24/7 support</div>
+        </div>
+         <div class="card">
+          <div class="sub">PDFs</div>
+          <div class="content">Now its 24/7 support</div>
+        </div>
+      </div>
+    </div>
+ 
+
+ <div>
+<?php include("../ProductPage/productpage.php"); ?>
+</div>
+
+
+
+  <!-- Footer -->
     <footer>
-        <div class="footer-content">
+        <div class="footer-content" id="footer-content">
             <div class="footer-col">
                 <h3>PrintCity</h3>
                 <p>Transforming memories into art with premium prints and custom framing solutions.</p>
                 <div class="social-icons">
                     <a href="#"><i class="fab fa-facebook-f"></i></a>
-                    <a href="#"><i class="fab fa-instagram"></i></a>
+                    <a href="https://www.instagram.com/print_city_tdpa?igsh=Zm9meHUyNG83MnJy"><i class="fab fa-instagram"></i></a>
                     <a href="#"><i class="fab fa-twitter"></i></a>
                     <a href="#"><i class="fab fa-pinterest"></i></a>
                 </div>
@@ -803,43 +626,18 @@
         </div>
     </footer>
 
-    <script>
-    // Stack area animation
-    document.addEventListener('DOMContentLoaded', function() {
-        const cards = document.querySelectorAll('.card');
-        const awayCards = document.querySelectorAll('.away');
-        
-        // Initial animation for hero section
-        setTimeout(() => {
-            document.querySelector('.hero-text').style.opacity = '1';
-            document.querySelector('.hero-text').style.transform = 'translateY(0)';
-        }, 300);
-        
-        // Floating frames animation
-        const frames = document.querySelectorAll('.floating-frame');
-        frames.forEach(frame => {
-            const randomRotate = (Math.random() * 6) - 3;
-            frame.style.transform = `rotate(${randomRotate}deg)`;
-        });
-        
-        // Stack cards animation on scroll
-        window.addEventListener('scroll', function() {
-            const stackSection = document.querySelector('.stack-area');
-            const stackSectionTop = stackSection.offsetTop;
-            const scrollPosition = window.scrollY + window.innerHeight;
-            
-            if (scrollPosition > stackSectionTop + 300) {
-                awayCards.forEach((card, index) => {
-                    setTimeout(() => {
-                        card.classList.remove('away');
-                    }, index * 200);
-                });
-            }
-        });
-        
-        // Trigger scroll event to check initial position
-        window.dispatchEvent(new Event('scroll'));
+  <!-- Floating Add Button -->
+  <button class="floating-button" onclick="scrollToTop()">↑</button>
+  <script>
+  function scrollToTop() {
+    window.scrollTo({
+      top: 0,          // scroll to the top
+      behavior: 'smooth' // smooth scrolling
     });
-    </script>
+  }
+</script>
+
+
+
 </body>
 </html>

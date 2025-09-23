@@ -10,7 +10,7 @@ $sql = "SELECT * FROM products";
 $result = mysqli_query($conn, $sql);
 ?>
 
-<section id="products" style="padding: 40px; background-color: #f5f7fa;">
+<section id="products" style="padding: 40px; background-color: rgb(233, 233, 229);">
     <h2 style="text-align:center; font-size: 32px; margin-bottom: 30px; color: #000000ff;">
         🌟 Explore Our Products
     </h2>

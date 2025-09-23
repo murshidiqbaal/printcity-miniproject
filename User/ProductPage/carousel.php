@@ -28,8 +28,8 @@ window.addEventListener("scroll", () => {
     const triggerNames = window.innerHeight * 0.6;
 
     if (scrollPos >= triggerPoint) {
-        const leftCards = document.querySelectorAll(".left-content .card");
-        const rightCards = document.querySelectorAll(".right-content .card");
+        const leftCards = document.querySelectorAll(".offer-left .offer-card");
+        const rightCards = document.querySelectorAll(".offer-right .offer-card");
 
         function animateCards(cards, direction) {
             cards.forEach((card, index) => {
@@ -80,8 +80,8 @@ window.addEventListener("scroll", () => {
     transform: translateY(-50px);
   }
 }
-    
-.card {
+
+.offer-card {
   width: 200px;
   height: 250px;
   border-radius: 25px;
@@ -93,7 +93,7 @@ window.addEventListener("scroll", () => {
   opacity: 1;
 }
 
-.card img {
+.offer-card img {
   width: 100%;
   height: 100%;
   object-fit: cover; /* makes image fill container while keeping aspect ratio */
@@ -102,13 +102,13 @@ window.addEventListener("scroll", () => {
 
 
 /* Left-moving cards */
-.card.move-left {
+.offer-card.move-left {
   transform: translate(-150%, -50%);
   opacity: 0.8;
 }
 
 /* Right-moving cards */
-.card.move-right {
+.offer-card.move-right {
   transform: translate(50%, -50%);
   opacity: 0.8;
 }
@@ -162,7 +162,7 @@ window.addEventListener("scroll", () => {
      body {
   padding-bottom: 100px; /* Adds 300px of extra scroll space */
 }
-.container {
+.offer-container {
   opacity: 0;
   transform: translateY(0); /* was 100px */
   animation: slideInUp .5s ease-out forwards;
@@ -177,27 +177,27 @@ window.addEventListener("scroll", () => {
   top: 30%; /* small offset from top */
  }
 
-.left, .right {
+.offer-left, .offer-right {
   display: flex;
   flex-direction: column;
   gap: 15px;
 }
 
-.left .card {
+.offer-left .offer-card {
   animation: slideLeft 0.6s forwards;
 }
 
-.right .card {
+.offer-right .offer-card {
   animation: slideRight 0.6s forwards;
 }
 
-.left .card:nth-child(1) { animation-delay: 0.1s; }
-.left .card:nth-child(2) { animation-delay: 0.3s; }
-.left .card:nth-child(3) { animation-delay: 0.5s; }
+.offer-left .offer-card:nth-child(1) { animation-delay: 0.1s; }
+.offer-left .offer-card:nth-child(2) { animation-delay: 0.3s; }
+.offer-left .offer-card:nth-child(3) { animation-delay: 0.5s; }
 
-.right .card:nth-child(1) { animation-delay: 0.1s; }
-.right .card:nth-child(2) { animation-delay: 0.3s; }
-.right .card:nth-child(3) { animation-delay: 0.5s; }
+.offer-right .offer-card:nth-child(1) { animation-delay: 0.1s; }
+.offer-right .offer-card:nth-child(2) { animation-delay: 0.3s; }
+.offer-right .offer-card:nth-child(3) { animation-delay: 0.5s; }
 
 /* Keyframes */
 @keyframes slideLeft {
@@ -214,12 +214,12 @@ window.addEventListener("scroll", () => {
 </head>
 <body>
      
-       <div class="container">
-    <div class="right-content">
+       <div class="offer-container">
+    <div class="offer-right">
         <?php $count = 0; ?>
         <?php while ($row = mysqli_fetch_assoc($result)): ?>
             <?php if ($count % 2 == 0): ?>
-                <div class="card">
+                <div class="offer-card">
                     <img src="../../Admin/Products/<?= htmlspecialchars($row['image_path']) ?>" 
                          alt="<?= htmlspecialchars($row['name']) ?>">
                 </div>
@@ -228,12 +228,12 @@ window.addEventListener("scroll", () => {
         <?php endwhile; ?>
     </div>
 
-    <div class="left-content">
+    <div class="offer-left">
         <?php mysqli_data_seek($result, 0); // reset pointer ?>
         <?php $count = 0; ?>
         <?php while ($row = mysqli_fetch_assoc($result)): ?>
             <?php if ($count % 2 == 1 || $count == 0): ?> <!-- add first item to left -->
-                <div class="card">
+                <div class="offer-card">
                     <img src="../../Admin/Products/<?= htmlspecialchars($row['image_path']) ?>" 
                          alt="<?= htmlspecialchars($row['name']) ?>">
                 </div>
