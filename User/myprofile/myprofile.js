@@ -64,4 +64,10 @@
                 reader.readAsDataURL(file);
             }
         });
-  
+ 
+function openLogoutPopup() {
+    document.getElementById("logoutPopup").style.display = "flex";
+}
+function closeLogoutPopup() {
+    document.getElementById("logoutPopup").style.display = "none";
+}

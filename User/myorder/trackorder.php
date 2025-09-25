@@ -15,6 +15,38 @@ $user_id = intval($_SESSION['user_id']);
 $order_id = intval($_GET['order_id'] ?? 0);
 $type = $_GET['type'] ?? 'normal'; // normal | custom
 
+// Feedback submission handler
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['feedback_submit'])) {
+    $rating = intval($_POST['rating'] ?? 0);
+    $comments = trim($_POST['comments'] ?? '');
+    $order_id_post = intval($_POST['order_id'] ?? 0);
+    $current_status = ""; // or some default value depending on your logic
+    // Simple validation
+    // Fetch current order status
+$stmt = $conn->prepare("SELECT status FROM orders WHERE order_id = ?");
+$stmt->bind_param("i", $order_id_post);
+$stmt->execute();
+$stmt->bind_result($current_status);
+$stmt->fetch();
+$stmt->close();
+
+// Now validate
+if ($current_status === 'Delivered' && $rating >= 1 && $rating <= 5) {
+    $stmt_feedback = $conn->prepare("
+        INSERT INTO feedbacks (order_id, user_id, rating, comments) 
+        VALUES (?, ?, ?, ?)
+    ");
+    $stmt_feedback->bind_param("iiis", $order_id_post, $user_id, $rating, $comments);
+    $stmt_feedback->execute();
+    $stmt_feedback->close();
+    $feedback_success = "Thank you for your feedback!";
+} else {
+    $feedback_error = "Invalid feedback submission.";
+}
+
+}
+
+
 // ========================
 // Fetch order details
 // ========================
@@ -660,6 +692,10 @@ body::before {
 }
 
     </style>
+
+
+
+    
 </head>
 <body>
 <header class="bg-primary text-white p-3 d-flex align-items-center">
@@ -798,6 +834,37 @@ body::before {
 </div>
 
 </div>
+
+<?php if ($current_status === 'delivered'): ?>
+    <div class="order-card">
+        <h2 class="text-xl font-semibold text-gray-800 mb-4">Leave Feedback</h2>
+
+        <?php if (!empty($feedback_success)): ?>
+            <p class="text-green-600 mb-4"><?= htmlspecialchars($feedback_success) ?></p>
+        <?php elseif (!empty($feedback_error)): ?>
+            <p class="text-red-600 mb-4"><?= htmlspecialchars($feedback_error) ?></p>
+        <?php endif; ?>
+
+        <form method="POST" action="">
+            <input type="hidden" name="order_id" value="<?= $order['order_id'] ?>">
+            
+            <label for="rating" class="block mb-2 font-semibold text-gray-800">Rating:</label>
+            <select id="rating" name="rating" required class="mb-4 p-2 border rounded w-full max-w-xs">
+                <option value="">Select rating</option>
+                <?php for ($i = 5; $i >= 1; $i--): ?>
+                    <option value="<?= $i ?>"><?= $i ?> <?= $i === 1 ? 'Star' : 'Stars' ?></option>
+                <?php endfor; ?>
+            </select>
+            
+            <label for="comments" class="block mb-2 font-semibold text-gray-800">Comments (optional):</label>
+            <textarea id="comments" name="comments" rows="4" class="mb-4 p-2 border rounded w-full max-w-xs"></textarea>
+            
+            <button type="submit" name="feedback_submit" class="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 transition">
+                Submit Feedback
+            </button>
+        </form>
+    </div>
+<?php endif; ?>
 
 
         <!-- Help Section -->

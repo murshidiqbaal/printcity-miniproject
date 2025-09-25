@@ -1,15 +1,7 @@
 <?php
 session_start();
 
-if (isset($_SESSION["user_id"])) {
-    // Already logged in → go directly to homepage
-    if ($_SESSION["role"] === 'admin') {
-        header("Location: ../../Admin/HomeScreen/indexAdmin.html");
-    } else {
-        header("Location: ../../User/HomePage/index.php");
-    }
-    exit();
-}
+
 
 $conn = mysqli_connect("localhost", "root", "", "printcity");
 if (!$conn) {
@@ -57,7 +49,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $res = $stmt->get_result();
 
     if ($res->num_rows > 0) {
-        echo "<script>alert('This account already exists!'); window.location.href='signup.php';</script>";
+        echo "<script>alert('This account already exists!'); window.location.href='signup.html';</script>";
     } else {
         $insert = $conn->prepare("INSERT INTO users (username, email, phone, password, role, created_at) 
                                   VALUES (?, ?, ?, ?, 'user', NOW())");
@@ -78,3 +70,5 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 }
 $conn->close();
 ?>
+
+

@@ -1,47 +1,19 @@
 <?php
 $conn = mysqli_connect("localhost", "root", "", "printcity");
-
 if (!$conn) {
     die("Connection failed: " . mysqli_connect_error());
-}
-
-// Handle delete request
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_user_id'])) {
-    $deleteUserId = intval($_POST['delete_user_id']);
-    if ($deleteUserId > 0) {
-        $stmt = mysqli_prepare($conn, "DELETE FROM users WHERE user_id = ?");
-        mysqli_stmt_bind_param($stmt, "i", $deleteUserId);
-        mysqli_stmt_execute($stmt);
-        mysqli_stmt_close($stmt);
-
-        // Redirect to avoid resubmission and preserve filters
-        $redirectUrl = $_SERVER['PHP_SELF'];
-        $queryParams = [];
-        if (!empty($_GET['search'])) {
-            $queryParams['search'] = $_GET['search'];
-        }
-        if (!empty($_GET['filter_month'])) {
-            $queryParams['filter_month'] = $_GET['filter_month'];
-        }
-        if ($queryParams) {
-            $redirectUrl .= '?' . http_build_query($queryParams);
-        }
-        header("Location: $redirectUrl");
-        exit;
-    }
 }
 
 // Get filter values
 $search = $_GET['search'] ?? '';
 $filterMonth = $_GET['filter_month'] ?? '';
 
-// Build WHERE clauses
+// Build WHERE clauses for users table
 $whereClauses = [];
 $params = [];
 $paramTypes = '';
 
 if ($search !== '') {
-    // Match against username, email, or phone
     $whereClauses[] = "(username LIKE ? OR email LIKE ? OR phone LIKE ?)";
     $params[] = '%' . $search . '%';
     $params[] = '%' . $search . '%';
@@ -59,8 +31,8 @@ if (count($whereClauses) > 0) {
     $whereSQL = 'WHERE ' . implode(' AND ', $whereClauses);
 }
 
+// Fetch users
 $sql = "SELECT * FROM users $whereSQL ORDER BY created_at DESC";
-
 if (count($params) > 0) {
     $stmt = mysqli_prepare($conn, $sql);
     mysqli_stmt_bind_param($stmt, $paramTypes, ...$params);
@@ -70,9 +42,53 @@ if (count($params) > 0) {
     $result = mysqli_query($conn, $sql);
 }
 
-function h($str) {
-    return htmlspecialchars($str, ENT_QUOTES, 'UTF-8');
+// Fetch user_profiles for all users in one query
+$userProfiles = [];
+if ($result && mysqli_num_rows($result) > 0) {
+    $userIds = [];
+    while ($user = mysqli_fetch_assoc($result)) {
+        $userIds[] = $user['user_id'];
+        $usersData[$user['user_id']] = $user; // store users
+    }
+
+    if ($userIds) {
+        $idsStr = implode(',', $userIds);
+        $profileSql = "SELECT * FROM user_profiles WHERE user_id IN ($idsStr)";
+        $profileResult = mysqli_query($conn, $profileSql);
+        if ($profileResult) {
+            while ($profile = mysqli_fetch_assoc($profileResult)) {
+                $userProfiles[$profile['user_id']] = $profile;
+            }
+        }
+    }
 }
+function h($str) {
+    // Convert null to empty string before passing to htmlspecialchars
+    return htmlspecialchars($str ?? '', ENT_QUOTES, 'UTF-8');
+}
+
+
+// Handle deletion
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_user_id'])) {
+    $deleteUserId = (int)$_POST['delete_user_id'];
+
+    // Delete from user_profiles first due to foreign key constraint
+    $delProfileStmt = mysqli_prepare($conn, "DELETE FROM user_profiles WHERE user_id = ?");
+    mysqli_stmt_bind_param($delProfileStmt, 'i', $deleteUserId);
+    mysqli_stmt_execute($delProfileStmt);
+    mysqli_stmt_close($delProfileStmt);
+
+    // Then delete from users table
+    $delUserStmt = mysqli_prepare($conn, "DELETE FROM users WHERE user_id = ?");
+    mysqli_stmt_bind_param($delUserStmt, 'i', $deleteUserId);
+    mysqli_stmt_execute($delUserStmt);
+    mysqli_stmt_close($delUserStmt);
+
+    // Redirect to avoid resubmission
+    header("Location: " . $_SERVER['PHP_SELF']);
+    exit();
+}
+
 ?>
 
 <!DOCTYPE html>
@@ -171,7 +187,7 @@ function h($str) {
   <a href="<?= $_SERVER['PHP_SELF'] ?>" class="reset-button">Reset</a>
 </form>
 
-<?php if ($result && mysqli_num_rows($result) > 0): ?>
+<?php if (!empty($usersData)): ?>
 <table class="customer-table">
   <thead>
     <tr>
@@ -184,28 +200,33 @@ function h($str) {
     </tr>
   </thead>
   <tbody>
-    <?php while ($user = mysqli_fetch_assoc($result)): ?>
+    <?php foreach ($usersData as $userId => $user): 
+        $profile = $userProfiles[$userId] ?? null;
+        $name = $profile['full_name'] ?? $user['username'];
+        $email = $profile['email'] ?? $user['email'];
+    ?>
     <tr>
-      <td><?= h($user['user_id']) ?></td>
-      <td><?= isset($user['username']) ? h($user['username']) : '-' ?></td>
-      <td><?= isset($user['email']) ? h($user['email']) : '-' ?></td>
-      <td><?= isset($user['phone']) ? h($user['phone']) : '-' ?></td>
+      <td><?= h($userId) ?></td>
+      <td><?= h($name) ?></td>
+      <td><?= h($email) ?></td>
+      <td><?= h($user['phone']) ?></td>
       <td><?= h($user['created_at']) ?></td>
       <td>
         <form method="POST" onsubmit="return confirm('Are you sure you want to delete this customer?');" style="margin:0;">
-          <input type="hidden" name="delete_user_id" value="<?= (int)$user['user_id'] ?>" />
+          <input type="hidden" name="delete_user_id" value="<?= (int)$userId ?>" />
           <button type="submit" class="delete-button">Delete</button>
         </form>
       </td>
     </tr>
-    <?php endwhile; ?>
+    <?php endforeach; ?>
   </tbody>
 </table>
 <?php else: ?>
-  <div class="no-users">
-    <p>No customers found.</p>
-  </div>
+<div class="no-users">
+  <p>No customers found.</p>
+</div>
 <?php endif; ?>
+
 
 </body>
 </html>

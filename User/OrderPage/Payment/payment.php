@@ -7,15 +7,37 @@ if (!$conn) {
 }
 
 if (!isset($_SESSION['user_id'])) {
-    header("Location: ../login.php");
+    header("Location: ../../login.php");
     exit();
 }
 
-// Get user details from session or database (assuming user info is stored in session)
-$user_name = $_SESSION['user_name'] ?? 'Customer';
-$user_email = $_SESSION['user_email'] ?? 'customer@example.com';
-$user_address = $_SESSION['user_address'] ?? '123 Main St, City, State 12345';
-$user_phone = $_SESSION['user_phone'] ?? '(555) 123-4567';
+$user_id = $_SESSION['user_id'];
+
+// Corrected query using the actual primary key column `user_id`
+$stmt = $conn->prepare("
+    SELECT u.username, u.email, u.phone, 
+           up.address, up.city, up.state, up.zip_code, up.country 
+    FROM users u
+    LEFT JOIN user_profiles up ON u.user_id = up.user_id
+    WHERE u.user_id = ?
+");
+$stmt->bind_param("i", $user_id);
+$stmt->execute();
+$result = $stmt->get_result();
+$user_data = $result->fetch_assoc();
+$stmt->close();
+
+// Fallbacks in case profile fields are empty
+$user_name    = $user_data['username'] ?? 'Customer';
+$user_email   = $user_data['email'] ?? 'customer@example.com';
+$user_phone = !empty($user_data['phone']) ? $user_data['phone'] : '(555) 123-4567';
+$user_address = !empty($user_data['address']) ? $user_data['address'] : '123 Main St';
+$user_city    = !empty($user_data['city']) ? $user_data['city'] : 'City';
+$user_state   = !empty($user_data['state']) ? $user_data['state'] : 'State';
+$user_zip     = !empty($user_data['zip_code']) ? $user_data['zip_code'] : '000000';
+$user_country = !empty($user_data['country']) ? $user_data['country'] : 'India';
+$user_address_full = "$user_address, $user_city, $user_state, $user_zip, $user_country";
+
 
 // Example: product_id & quantity passed from previous page
 $product_id = $_POST['product_id'] ?? $_GET['product_id'] ?? null;
@@ -30,22 +52,24 @@ $stmt = $conn->prepare("SELECT * FROM products WHERE product_id = ?");
 $stmt->bind_param("i", $product_id);
 $stmt->execute();
 $product = $stmt->get_result()->fetch_assoc();
+$stmt->close();
 
 if (!$product) {
     die("Product not found.");
 }
 
-// Calculate totals (add tax and shipping for realism)
+// Calculate totals
 $subtotal = $product['price'] * $quantity;
 $tax_rate = 0.08; // 8% tax
 $tax = $subtotal * $tax_rate;
-$shipping = 0; // Free shipping as per original
+$shipping = 0; // Free shipping
 $total_amount = $subtotal + $tax + $shipping;
 
-// Generate invoice number (creative: based on date and user ID)
-$invoice_number = 'INV-' . date('Ymd') . '-' . $_SESSION['user_id'];
+// Generate invoice number
+$invoice_number = 'INV-' . date('Ymd') . '-' . $user_id;
 $invoice_date = date('F j, Y');
 ?>
+
 
 <!DOCTYPE html>
 <html lang="en">
@@ -370,19 +394,30 @@ $invoice_date = date('F j, Y');
             <!-- Billing Information -->
             <div class="billing-info">
                 <div class="info-section">
-                    <h3><i class="fas fa-user"></i> Bill To</h3>
-                    <p><strong><?= htmlspecialchars($user_name) ?></strong></p>
-                    <p><?= htmlspecialchars($user_email) ?></p>
-                    <p><?= htmlspecialchars($user_address) ?></p>
-                    <p>Phone: <?= htmlspecialchars($user_phone) ?></p>
-                </div>
-                <div class="info-section">
-                    <h3><i class="fas fa-building"></i> Ship To</h3>
-                    <p><strong><?= htmlspecialchars($user_name) ?></strong></p>
-                    <p><?= htmlspecialchars($user_email) ?></p>
-                    <p><?= htmlspecialchars($user_address) ?></p>
-                    <p>Phone: <?= htmlspecialchars($user_phone) ?></p>
-                </div>
+    <h3><i class="fas fa-user"></i> Bill To</h3>
+    <p><strong><?= htmlspecialchars($user_name) ?></strong></p>
+    <p><?= htmlspecialchars($user_email) ?></p>
+    <p>
+        <?= htmlspecialchars($user_address) ?>,
+        <?= htmlspecialchars($user_city) ?>,
+        <?= htmlspecialchars($user_state) ?> - <?= htmlspecialchars($user_zip) ?>,
+        <?= htmlspecialchars($user_country) ?>
+    </p>
+    <p>Phone: <?= htmlspecialchars($user_phone) ?></p>
+</div>
+
+                 <div class="info-section">
+    <h3><i class="fas fa-user"></i> Bill To</h3>
+    <p><strong><?= htmlspecialchars($user_name) ?></strong></p>
+    <p><?= htmlspecialchars($user_email) ?></p>
+    <p>
+        <?= htmlspecialchars($user_address) ?>,
+        <?= htmlspecialchars($user_city) ?>,
+        <?= htmlspecialchars($user_state) ?> - <?= htmlspecialchars($user_zip) ?>,
+        <?= htmlspecialchars($user_country) ?>
+    </p>
+    <p>Phone: <?= htmlspecialchars($user_phone) ?></p>
+</div>
             </div>
 
             <!-- Order Items -->

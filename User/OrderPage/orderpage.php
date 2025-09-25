@@ -274,13 +274,27 @@ document.addEventListener("DOMContentLoaded", function () {
 
 <script src="../favourite/favourite.js"></script>
 
-                            <button id="buy-now" class="flex-1 bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded-md transition">
-                                <i class="fas fa-bolt mr-2"></i> Buy Now
-                            </button>
+                            <form action="Payment/payment.php" method="POST" id="order-form">
+    <input type="hidden" name="product_id" value="<?php echo $product['product_id']; ?>">
+    <input type="hidden" name="quantity" id="hidden-quantity" value="1">
+</form>
+
+<button id="place-order" class="flex-1 bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded-md transition">
+    <i class="fas fa-bolt mr-2"></i> Buy Now
+</button>
                         </div>
                     </div>
                 </div>
-                
+                <script>
+    buyNowBtn = document.getElementById('place-order');
+    const orderForm = document.getElementById('order-form');
+
+    buyNowBtn.addEventListener('click', function() {
+        // Optional: update quantity if needed
+        // document.getElementById('hidden-quantity').value = desiredQuantity;
+        orderForm.submit(); // Submit the form
+    });
+</script>
                <!-- Product Description -->
 <div class="border-t border-gray-200 p-6">
     <h3 class="font-bold text-lg mb-3 text-gray-800">Product Description</h3>

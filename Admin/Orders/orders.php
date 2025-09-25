@@ -444,6 +444,34 @@ mysqli_close($conn);
                 row.style.display = match ? '' : 'none';
             });
         });
+        // Tab functionality
+const tabButtons = document.querySelectorAll('.tab-btn');
+const orderRows = document.querySelectorAll('.order-row');
+
+tabButtons.forEach(btn => {
+    btn.addEventListener('click', () => {
+        // Remove 'active' class from all buttons
+        tabButtons.forEach(b => b.classList.remove('active'));
+        // Add 'active' to clicked button
+        btn.classList.add('active');
+
+        const tab = btn.dataset.tab; // 'all', 'product', 'custom'
+
+        orderRows.forEach(row => {
+            const type = row.dataset.type; // 'regular' or 'custom'
+            if (tab === 'all') {
+                row.style.display = '';
+            } else if (tab === 'product' && type === 'regular') {
+                row.style.display = '';
+            } else if (tab === 'custom' && type === 'custom') {
+                row.style.display = '';
+            } else {
+                row.style.display = 'none';
+            }
+        });
+    });
+});
+
     </script>
 </body>
 </html>

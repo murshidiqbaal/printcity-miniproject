@@ -1,5 +1,38 @@
+
 <?php
 session_start();
+
+
+
+if (!isset($_SESSION['user_id'])) {
+    header("Location: ../../Auth/login/login.php");
+    exit();
+}
+
+$conn = mysqli_connect("localhost", "root", "", "printcity");
+if (!$conn) {
+    die("Connection failed: " . mysqli_connect_error());
+}
+
+$user_id = $_SESSION['user_id']; // check this is same as your column in DB
+$stmt = $conn->prepare("SELECT username, email, phone FROM users WHERE user_id = ?");
+$stmt->bind_param("i", $user_id);
+$stmt->execute();
+$res = $stmt->get_result();
+$user_data = $res->fetch_assoc();
+
+
+// 2. Fetch from user_profiles table (overrides users table if exists)
+$stmt = $conn->prepare("SELECT phone, email FROM user_profiles WHERE user_id = ?");
+$stmt->bind_param("i", $user_id);
+$stmt->execute();
+$profile_data = $stmt->get_result()->fetch_assoc();
+$stmt->close();
+// Final values: prefer profile_data if exists
+$current_phone = $profile_data['phone'] ?? $user_data['phone'] ?? '';
+$current_email = $profile_data['email'] ?? $user_data['email'] ?? '';
+
+
 $conn = mysqli_connect("localhost", "root", "", "printcity");
 
 if (!$conn) {
@@ -48,6 +81,77 @@ if ($result->num_rows > 0) {
 
 $stmt->close();
 
+
+
+
+// Assume $user_data is already fetched as in previous response (including current user's phone if logged in)
+// Also assume $errors is initialized: $errors = [];
+
+// Form processing (e.g., if form was submitted)
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $submittedPhone = trim($_POST['phone'] ?? ''); // Sanitize input
+    
+    // Check if user is logged in (current user)
+    $isLoggedIn = isset($_SESSION['user_id']);
+    $currentUserPhone = $user_data['phone'] ?? ''; // From fetched user data
+    
+    // Validation rules for phone
+    $phoneErrors = [];
+    
+    if ($isLoggedIn) {
+        // For logged-in user: Phone is REQUIRED (not empty)
+        if (empty($submittedPhone)) {
+            $phoneErrors[] = 'Phone number is required for logged-in users.';
+        } else {
+            // Optional: Ensure it matches the current user's phone (for security, e.g., prevent tampering in edit forms)
+            // Remove this if users can update their phone freely
+            if ($submittedPhone !== $currentUserPhone) {
+                $phoneErrors[] = 'Submitted phone does not match your account. Please use your registered phone.';
+            }
+            
+            // Validate phone format (e.g., 10-15 digits, allowing + , - , spaces)
+            if (!preg_match('/^[\+]?[1-9][\d]{0,15}$/', preg_replace('/[\s\-\$\$]/', '', $submittedPhone))) {
+                $phoneErrors[] = 'Invalid phone number format. Please enter a valid phone (e.g., +1-123-456-7890).';
+            }
+        }
+    } else {
+        // For non-logged-in users (e.g., registration): Phone is optional but validate if provided
+        if (!empty($submittedPhone)) {
+            if (!preg_match('/^[\+]?[1-9][\d]{0,15}$/', preg_replace('/[\s\-\$\$]/', '', $submittedPhone))) {
+                $phoneErrors[] = 'Invalid phone number format. Please enter a valid phone or leave empty.';
+            }
+        }
+        // If you want it required for registration, add: else { $phoneErrors[] = 'Phone number is required.'; }
+    }
+    
+    // Set error for the field (combine if multiple)
+    if (!empty($phoneErrors)) {
+        $errors['phone'] = implode(' ', $phoneErrors); // Or keep as array if you prefer multi-line errors
+    } else {
+        // If valid, you can update the DB here (e.g., for profile edit)
+        if ($isLoggedIn && !empty($submittedPhone)) {
+            try {
+                $stmt = $pdo->prepare("UPDATE users SET phone = ? WHERE id = ?");
+                $stmt->execute([$submittedPhone, $_SESSION['user_id']]);
+                // Refetch $user_data if needed for display
+                // Success message: $success = 'Phone updated successfully.';
+            } catch (PDOException $e) {
+                error_log("DB Update Error: " . $e->getMessage());
+                $errors['phone'] = 'Failed to update phone. Please try again.';
+            }
+        }
+    }
+}
+
+// If not POST, or after validation, ensure $user_data is set for pre-filling (from previous fetch logic)
+if (empty($user_data) && $isLoggedIn) {
+    // Refetch if needed (reuse the fetch logic from previous response)
+    // ...
+}
+
+
+
+
 // Handle profile picture upload if file is present (standalone, before form processing)
 if (isset($_FILES['profile_picture']) && $_FILES['profile_picture']['error'] === UPLOAD_ERR_OK) {
     $target_dir = "imgs/";
@@ -95,7 +199,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['update_profile'])) { /
     $zip_code        = trim($_POST['zip_code'] ?? '');
     $country         = trim($_POST['country'] ?? 'India');
     $delivery_notes  = trim($_POST['delivery_notes'] ?? '');
-    $payment_method  = trim($_POST['payment_method'] ?? '');
+    
 
     // Validation
     if (empty($full_name) || empty($email)) {
@@ -109,21 +213,23 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['update_profile'])) { /
             // UPDATE existing profile
             $sql = "UPDATE user_profiles SET 
                         full_name = ?, email = ?, phone = ?, address = ?, city = ?, state = ?, 
-                        zip_code = ?, country = ?, delivery_notes = ?, payment_method = ?, 
+                        zip_code = ?, country = ?, delivery_notes = ?, 
                         profile_picture = ?, updated_at = NOW() 
                     WHERE user_id = ?";
             $stmt = $conn->prepare($sql);
-            $stmt->bind_param("sssssssssssi", $full_name, $email, $phone, $address, $city, $state, $zip_code, $country, $delivery_notes, $payment_method, $profile_picture, $user_id);
+            $stmt->bind_param("ssssssssssi", $full_name, $email, $phone, $address, $city, $state, $zip_code, $country, $delivery_notes, $profile_picture, $user_id);
             $msg = "Profile updated successfully!";
+
         } else {
             // INSERT new profile
             $sql = "INSERT INTO user_profiles 
-                    (user_id, full_name, email, phone, address, city, state, zip_code, country, delivery_notes, payment_method, profile_picture, created_at, updated_at) 
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())";
+                    (user_id, full_name, email, phone, address, city, state, zip_code, country, delivery_notes, profile_picture, created_at, updated_at) 
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())";
             $stmt = $conn->prepare($sql);
-            $stmt->bind_param("isssssssssss", $user_id, $full_name, $email, $phone, $address, $city, $state, $zip_code, $country, $delivery_notes, $payment_method, $profile_picture);
+            $stmt->bind_param("isssssssssss", $user_id, $full_name, $email, $phone, $address, $city, $state, $zip_code, $country, $delivery_notes, $profile_picture);
             $msg = "Profile created successfully!";
         }
+
 
         if ($stmt->execute()) {
             $success_message = $msg;
@@ -184,7 +290,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $stmt->execute();
         $stmt->close();
 
-        echo "<p style='color:green;'>Profile picture updated successfully!</p>";
+        echo "<p style='color:green;'></p>";
     }
 }
 // Fetch recent orders for current user (limit 5)
@@ -563,6 +669,97 @@ $profile_picture_path = !empty($user_data['profile_picture'])
                 flex-direction: column;
             }
         }
+       
+    .logout {
+        margin-top: 2rem;
+        text-align: left;
+        
+            position: relative;
+            bottom: 20px;
+            width: 240px;
+        }
+    
+
+    .logout button {
+        background: var(--danger-color);
+        color: var(--white);
+        border: none;
+        padding: 0.75rem 2rem;
+        border-radius: 0.5rem;
+        font-size: 1rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background 0.3s, transform 0.2s;
+        box-shadow: var(--shadow);
+    }
+
+    .logout button:hover {
+        background: #b71c1c;
+        transform: translateY(-2px) scale(1.04);
+    }
+    
+/* Popup overlay */
+.popup-overlay {
+    display: none; /* hidden by default */
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: rgba(0, 0, 0, 0.6);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+}
+
+/* Popup box */
+.popup-box {
+    background: #fff;
+    padding: 2rem;
+    border-radius: 0.5rem;
+    width: 320px;
+    text-align: center;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+    animation: popupFade 0.3s ease;
+}
+
+/* Popup buttons */
+.popup-actions {
+    margin-top: 1.5rem;
+    display: flex;
+    justify-content: space-around;
+}
+
+.popup-actions .confirm {
+    background: #e74c3c;
+    border: none;
+    color: #fff;
+    padding: 0.6rem 1.2rem;
+    border-radius: 0.3rem;
+    cursor: pointer;
+    font-weight: 600;
+}
+
+.popup-actions .cancel {
+    background: #555;
+    border: none;
+    color: #fff;
+    padding: 0.6rem 1.2rem;
+    border-radius: 0.3rem;
+    cursor: pointer;
+    font-weight: 600;
+}
+
+.popup-actions button:hover {
+    opacity: 0.9;
+}
+
+/* Fade animation */
+@keyframes popupFade {
+    from { transform: scale(0.8); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+}
+
+
     </style>
 </head>
 <body>
@@ -571,6 +768,12 @@ $profile_picture_path = !empty($user_data['profile_picture'])
             <i class="fas fa-arrow-left"></i>
         </a>
         <h1>My Profile</h1>
+        <!-- Logout Icon/Button -->
+        <div style="margin-left:auto;">
+            <a href="javascript:void(0);" title="Logout" onclick="window.location.href='../../Auth/logout.php';" style="color:#fff;font-size:1.3rem;">
+                <i class="fas fa-sign-out-alt"></i>
+            </a>
+        </div>
     </header>
 
     <div class="container">
@@ -601,7 +804,10 @@ $profile_picture_path = !empty($user_data['profile_picture'])
                         <a href="#" class="nav-link" data-section="orders-section">
                             <i class="fas fa-box"></i> Orders
                         </a>
-                    </li>
+
+                    
+
+
                 </ul>
             </div>
             <div class="profile-content">
@@ -616,15 +822,17 @@ $profile_picture_path = !empty($user_data['profile_picture'])
                                 <div class="form-error"><?php echo htmlspecialchars($errors['full_name'] ?? ''); ?></div>
                             </div>
                             <div class="form-group">
-                                <label for="email" class="form-label">Email *</label>
-                                <input type="email" id="email" name="email" class="form-control" value="<?php echo htmlspecialchars($user_data['email'] ?? ''); ?>" required>
-                                <div class="form-error"><?php echo htmlspecialchars($errors['email'] ?? ''); ?></div>
-                            </div>
+    <label for="email" class="form-label">Email</label>
+    <input type="text" id="email" name="email" class="form-control" 
+           value="<?php echo htmlspecialchars($current_email); ?>">
+</div>
                             <div class="form-group">
-                                <label for="phone" class="form-label">Phone</label>
-                                <input type="text" id="phone" name="phone" class="form-control" value="<?php echo htmlspecialchars($user_data['phone'] ?? ''); ?>">
-                                <div class="form-error"><?php echo htmlspecialchars($errors['phone'] ?? ''); ?></div>
-                            </div>
+    <label for="phone" class="form-label">Phone</label>
+    <input type="text" id="phone" name="phone" class="form-control" 
+           value="<?php echo htmlspecialchars($current_phone); ?>">
+</div>
+
+
                             <div class="form-group">
                                 <label for="address" class="form-label">Address</label>
                                 <input type="text" id="address" name="address" class="form-control" value="<?php echo htmlspecialchars($user_data['address'] ?? ''); ?>">
@@ -660,26 +868,13 @@ $profile_picture_path = !empty($user_data['profile_picture'])
                                 <textarea id="delivery_notes" name="delivery_notes" class="form-control"><?php echo htmlspecialchars($user_data['delivery_notes'] ?? ''); ?></textarea>
                                 <div class="form-error"><?php echo htmlspecialchars($errors['delivery_notes'] ?? ''); ?></div>
                             </div>
-                            <div class="form-group">
-                                <label class="form-label">Payment Method</label>
-                                <div class="radio-group">
-                                    <?php 
-                                    $payment_methods = ['Credit Card', 'Debit Card', 'PayPal', 'Cash on Delivery'];
-                                    foreach ($payment_methods as $method): 
-                                        $checked = (isset($user_data['payment_method']) && $user_data['payment_method'] === $method) ? 'checked' : '';
-                                    ?>
-                                    <div class="radio-option">
-                                        <input type="radio" id="payment_<?php echo strtolower(str_replace(' ', '_', $method)); ?>" name="payment_method" value="<?php echo $method; ?>" <?php echo $checked; ?>>
-                                        <label for="payment_<?php echo strtolower(str_replace(' ', '_', $method)); ?>"><?php echo $method; ?></label>
-                                    </div>
-                                    <?php endforeach; ?>
-                                </div>
-                                <div class="form-error"><?php echo htmlspecialchars($errors['payment_method'] ?? ''); ?></div>
-                            </div>
+                           
                         </div>
                         <button type="submit" name="update_profile" class="btn btn-block">Update Profile</button>
                     </form>
                 </div>
+                
+
                 <div id="orders-section" class="section">
                     <h2 class="section-title"><i class="fas fa-box"></i> Recent Orders</h2>
                     <?php if (count($orders) > 0): ?>
