@@ -232,17 +232,7 @@ function h($str) {
 </head>
 <body>
 <div class="container">
-  <nav class="sidebar" aria-label="Admin Sidebar Navigation">
-    <div class="nav-links">
-      <a href="../Dashboard/dashboard.php" aria-label="Dashboard"><i class="fas fa-home"></i><span>Dashboard</span></a>
-      <a href="../Products/product.php" aria-label="Products"><i class="fas fa-box-open"></i><span>Products</span></a>
-      <a href="../Orders/orders.php" aria-label="Orders"><i class="fas fa-shopping-cart"></i><span>Orders</span></a>
-      <a href="../Customers/customers.php" aria-label="Customers"><i class="fas fa-users"></i><span>Customers</span></a>
-      <a href="../Revenue/revenue.php" aria-label="Revenue"><i class="fas fa-dollar-sign"></i><span>Revenue</span></a>
-      <a href="feedback.php" class="active" aria-current="page"><i class="fas fa-comment-dots"></i><span>Feedbacks</span></a>
-    </div>
-  </nav>
-
+  
   <main>
     <h1>Product Feedbacks</h1>
     <div class="feedback-table-wrapper" role="region" aria-live="polite" aria-label="User feedback table">

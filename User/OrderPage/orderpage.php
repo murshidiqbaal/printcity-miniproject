@@ -44,6 +44,17 @@ if (!$valid_profile) {
     header("Location: ../myprofile/myprofile.php?redirect=orderpage.php&product_id=" . $product_id);
     exit();
 }
+// Only for standard product orders (not custom prints)
+if (isset($product['product_id'])) {
+    $product_id = $product['product_id'];
+
+    // Reduce stock by the quantity purchased
+    $sql = "UPDATE products SET stock = GREATEST(stock - ?, 0) WHERE product_id = ?";
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param("ii", $quantity, $product_id);
+    $stmt->execute();
+    $stmt->close();
+}
 
 ?>
 
@@ -254,12 +265,22 @@ document.addEventListener("DOMContentLoaded", function () {
             <button type="button" class="quantity-btn bg-gray-200 hover:bg-gray-300 text-gray-700 px-3 py-1 rounded-r-lg" onclick="updateQuantity(1)">
                 <i class="fas fa-plus"></i>
             </button>
+        
+            <div class="ml-4 text-sm text-gray-500">
+                <?php if (isset($product['stock'])): ?>
+                    <?php if ($product['stock'] > 0): ?>
+                        <span class="text-green-600"><?php echo $product['stock']; ?> in stock</span>
+                    <?php else: ?>
+                        <span class="text-red-600">Out of stock</span>
+                    <?php endif; ?>
+                <?php else: ?>
+                    <span class="text-gray-500">Stock info not available</span>
+                <?php endif; ?>
+            </div>
         </div>
-        <?php if (isset($product['stock']) && $product['stock'] <= 0): ?>
-            <p class="text-red-600 text-sm mt-1">Out of stock</p>
-        <?php endif; ?>
     </div>
 
+    
     <!-- Action Buttons -->
     <div class="flex gap-3">
         <button id="add-to-favourite"

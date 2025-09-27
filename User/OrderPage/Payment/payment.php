@@ -11,59 +11,110 @@ if (!isset($_SESSION['user_id'])) {
     exit();
 }
 
+require_once __DIR__ . '/../../../vendor/autoload.php';
+use setasign\Fpdi\Fpdi;
+
+// Function to count PDF pages
+function countPdfPages($filePath) {
+    if (!file_exists($filePath)) {
+        return 1; // fallback if file doesn't exist
+    }
+    $pdf = new Fpdi();
+    return $pdf->setSourceFile($filePath);
+}
+
+// Get logged-in user ID
 $user_id = $_SESSION['user_id'];
 
-// Corrected query using the actual primary key column `user_id`
-$stmt = $conn->prepare("
-    SELECT u.username, u.email, u.phone, 
-           up.address, up.city, up.state, up.zip_code, up.country 
-    FROM users u
-    LEFT JOIN user_profiles up ON u.user_id = up.user_id
-    WHERE u.user_id = ?
-");
+// Fetch user profile
+$sql = "SELECT full_name, email, phone, address, city, state, zip_code, country 
+        FROM user_profiles WHERE user_id = ?";
+$stmt = $conn->prepare($sql);
 $stmt->bind_param("i", $user_id);
 $stmt->execute();
 $result = $stmt->get_result();
-$user_data = $result->fetch_assoc();
-$stmt->close();
+$user_data = $result->fetch_assoc() ?? [];
 
-// Fallbacks in case profile fields are empty
-$user_name    = $user_data['username'] ?? 'Customer';
+// Fallbacks for user info
+$user_name    = $user_data['full_name'] ?? 'Customer';
 $user_email   = $user_data['email'] ?? 'customer@example.com';
-$user_phone = !empty($user_data['phone']) ? $user_data['phone'] : '(555) 123-4567';
+$user_phone   = !empty($user_data['phone']) ? $user_data['phone'] : '(555) 123-4567';
 $user_address = !empty($user_data['address']) ? $user_data['address'] : '123 Main St';
 $user_city    = !empty($user_data['city']) ? $user_data['city'] : 'City';
 $user_state   = !empty($user_data['state']) ? $user_data['state'] : 'State';
 $user_zip     = !empty($user_data['zip_code']) ? $user_data['zip_code'] : '000000';
 $user_country = !empty($user_data['country']) ? $user_data['country'] : 'India';
-$user_address_full = "$user_address, $user_city, $user_state, $user_zip, $user_country";
 
+// Determine order type
+$order_type = $_GET['order_type'] ?? 'standard';
 
-// Example: product_id & quantity passed from previous page
-$product_id = $_POST['product_id'] ?? $_GET['product_id'] ?? null;
-$quantity   = $_POST['quantity'] ?? $_GET['quantity'] ?? 1;
+if ($order_type === 'custom') {
+    $file_name  = $_GET['file_name'] ?? null;
+    $print_type = $_GET['print_type'] ?? 'black_white';
+    $paper_size = $_GET['paper_size'] ?? 'A4';
+    $notes      = $_GET['notes'] ?? '';
+    $pages      = intval($_GET['pages'] ?? 1);
 
-if (!$product_id) {
-    die("Product not selected.");
+    
+    $uploads_dir = __DIR__ . '/uploads'; // Make sure this folder exists
+    if (!is_dir($uploads_dir)) {
+        mkdir($uploads_dir, 0777, true); // create uploads folder if not exists
+    }
+$filePath = $file_name ? $uploads_dir . '/' . basename($file_name) : null;
+
+ // Determine quantity
+    if ($filePath && file_exists($filePath) && preg_match('/\.pdf$/i', $file_name)) {
+        $quantity = countPdfPages($filePath);
+    } elseif ($filePath && preg_match('/\.(jpg|jpeg|png|gif)$/i', $file_name)) {
+        // treat an image as 1 page
+        $quantity = 1;
+    } else {
+        // fallback if no file uploaded
+        $quantity = intval($_GET['quantity'] ?? 1);
+        $file_name = null; // reset since no file exists
+        $filePath = null;
+    }
+
+    $unit_price = (strtolower($print_type) === 'color') ? 10 : 1;
+    $subtotal = ($unit_price * $pages) * $quantity;
+    $tax_rate = 0.00;
+    $tax = $subtotal * $tax_rate;
+    $shipping = 0;
+    $total_amount = $subtotal + $tax + $shipping;
+
+    $product = [
+        'product_id'  => 0,
+        'name'        => "Custom Print ({$paper_size} - " . ucfirst($print_type) . ")",
+        'description' => $notes ?: 'Custom print job',
+        'price'       => $unit_price,
+        'image_path'  => $file_name // can show thumbnail if image exists
+    ];
+} else {
+    // Normal product order path
+    $product_id = $_POST['product_id'] ?? $_GET['product_id'] ?? null;
+    $quantity   = intval($_POST['quantity'] ?? $_GET['quantity'] ?? 1);
+
+    if (!$product_id) {
+        die("Product not selected.");
+    }
+
+    $sql = "SELECT * FROM products WHERE product_id = ?";
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param("i", $product_id);
+    $stmt->execute();
+    $product = $stmt->get_result()->fetch_assoc();
+    $stmt->close();
+
+    if (!$product) {
+        die("Product not found.");
+    }
+
+    $subtotal = $product['price'] * $quantity;
+    $tax_rate = 0.08;
+    $tax = $subtotal * $tax_rate;
+    $shipping = 0;
+    $total_amount = $subtotal + $tax + $shipping;
 }
-
-// Fetch product details
-$stmt = $conn->prepare("SELECT * FROM products WHERE product_id = ?");
-$stmt->bind_param("i", $product_id);
-$stmt->execute();
-$product = $stmt->get_result()->fetch_assoc();
-$stmt->close();
-
-if (!$product) {
-    die("Product not found.");
-}
-
-// Calculate totals
-$subtotal = $product['price'] * $quantity;
-$tax_rate = 0.08; // 8% tax
-$tax = $subtotal * $tax_rate;
-$shipping = 0; // Free shipping
-$total_amount = $subtotal + $tax + $shipping;
 
 // Generate invoice number
 $invoice_number = 'INV-' . date('Ymd') . '-' . $user_id;
@@ -394,16 +445,14 @@ $invoice_date = date('F j, Y');
             <!-- Billing Information -->
             <div class="billing-info">
                 <div class="info-section">
-    <h3><i class="fas fa-user"></i> Bill To</h3>
-    <p><strong><?= htmlspecialchars($user_name) ?></strong></p>
-    <p><?= htmlspecialchars($user_email) ?></p>
+    <h3><i class="fas fa-user"></i> Bill From</h3>
+    <p><strong>ABM</strong></p>
+    <p>abmenterprises@gmail.com</p>
     <p>
-        <?= htmlspecialchars($user_address) ?>,
-        <?= htmlspecialchars($user_city) ?>,
-        <?= htmlspecialchars($user_state) ?> - <?= htmlspecialchars($user_zip) ?>,
-        <?= htmlspecialchars($user_country) ?>
+        Mangattukavala Thodupuzha - 685584,<br>
+        Idukki, Kerala,<br> India
     </p>
-    <p>Phone: <?= htmlspecialchars($user_phone) ?></p>
+    <p>Phone: 8137878813</p>
 </div>
 
                  <div class="info-section">
@@ -430,25 +479,48 @@ $invoice_date = date('F j, Y');
                         <tr>
                             <th>Item</th>
                             <th>Description</th>
-                            <th>Qty</th>
+                            <th>Pages</th>
                             <th>Unit Price</th>
                             <th>Total</th>
                         </tr>
                     </thead>
                     <tbody>
-                        <tr>
-                            <td>
-                                <img src="/miniproject/Admin/Products/<?= htmlspecialchars($product['image_path']) ?>" 
-                                     alt="<?= htmlspecialchars($product['name']) ?>">
-                            </td>
-                            <td>
-                                <strong><?= htmlspecialchars($product['name']) ?></strong><br>
-                                <small><?= htmlspecialchars($product['description'] ?? 'High-quality print product') ?></small>
-                            </td>
-                            <td><?= $quantity ?></td>
-                            <td>$<?= number_format($product['price'], 2) ?></td>
-                            <td>$<?= number_format($subtotal, 2) ?></td>
-                        </tr>
+                       <?php if ($order_type === 'custom'): ?>
+<tr>
+    <td>
+        <?php if ($file_name && preg_match('/\.(jpg|jpeg|png|gif)$/i', $file_name)): ?>
+            <img src="/miniproject/User/uploads/<?= htmlspecialchars($file_name) ?>" 
+                 alt="Custom File">
+        <?php else: ?>
+            <i class="fas fa-file-alt" style="font-size:40px;color:#007bff;"></i>
+        <?php endif; ?>
+    </td>
+    <td>
+        <strong>Custom Print (<?= ucfirst($print_type) ?>)</strong><br>
+        <small>Paper: <?= htmlspecialchars($paper_size) ?><br>
+        Notes: <?= htmlspecialchars($notes ?: 'No special notes') ?></small>
+    </td>
+    <td><?= $pages ?> pages</td>
+    <td>₹<?= number_format($unit_price, 2) ?></td>
+    <td>₹<?= number_format($subtotal, 2) ?></td>
+</tr>
+<?php else: ?>
+<tr>
+    <td>
+        <img src="/miniproject/Admin/Products/<?= htmlspecialchars($product['image_path']) ?>" 
+             alt="<?= htmlspecialchars($product['name']) ?>">
+    </td>
+    <td>
+        <strong><?= htmlspecialchars($product['name']) ?></strong><br>
+        <small><?= htmlspecialchars($product['description'] ?? 'High-quality print product') ?></small>
+    </td>
+    <td><?= $quantity ?></td>
+    <td>₹<?= number_format($product['price'], 2) ?></td>
+    <td>₹<?= number_format($subtotal, 2) ?></td>
+</tr>
+<?php endif; ?>
+
+
                     </tbody>
                 </table>
             </div>
@@ -486,11 +558,22 @@ $invoice_date = date('F j, Y');
             <div class="payment-section">
                 <h3><i class="fas fa-credit-card"></i> Select Payment Method</h3>
                 <form id="orderForm" action="../submitorder.php" method="POST" class="payment-form">
+
+
+  <?php if ($order_type === 'custom'): ?>
+    <input type="hidden" name="order_type" value="custom">
+    <input type="hidden" name="quantity" value="<?= $quantity ?>">
+    <input type="hidden" name="print_type" value="<?= htmlspecialchars($print_type ?? '') ?>">
+    <input type="hidden" name="paper_size" value="<?= htmlspecialchars($paper_size ?? '') ?>">
+    <input type="hidden" name="notes" value="<?= htmlspecialchars($notes ?? '') ?>">
+    <input type="hidden" name="file_name" value="<?= htmlspecialchars($file_name ?? '') ?>">
+<?php else: ?>
+
                     <input type="hidden" name="product_id" value="<?= $product['product_id'] ?>">
                     <input type="hidden" name="quantity" value="<?= $quantity ?>">
                     <input type="hidden" name="total_amount" value="<?= $total_amount ?>">
                     <input type="hidden" name="invoice_number" value="<?= $invoice_number ?>">
-
+<?php endif; ?>
                     <label for="payment_method">Choose your preferred payment method:</label>
                     <select name="payment_method" id="payment_method" required>
                         <option value="" disabled selected>Select a payment method</option>
@@ -519,6 +602,11 @@ $invoice_date = date('F j, Y');
     <!-- SweetAlert2 -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
+
+
+    
+
+
         document.getElementById("orderForm").addEventListener("submit", function(e) {
             e.preventDefault(); // stop default form submit
 
@@ -555,6 +643,9 @@ $invoice_date = date('F j, Y');
                 });
             });
         });
+
+
+        
     </script>
 </body>
 </html>

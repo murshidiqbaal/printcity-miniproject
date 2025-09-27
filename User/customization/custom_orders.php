@@ -18,6 +18,7 @@ $error_message = '';
 
 // Handle form submission
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
+    $pages = intval($_POST['pages'] ?? 1);
     $quantity = intval($_POST['quantity'] ?? 1);
     $print_type = mysqli_real_escape_string($conn, $_POST['print_type'] ?? 'color');
     $paper_size = mysqli_real_escape_string($conn, $_POST['paper_size'] ?? 'A4');
@@ -54,30 +55,20 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $error_message = "Please select a file to upload.";
     }
 
-    // If no errors, insert into custom_orders table
-    if (empty($error_message) && !empty($uploaded_file)) {
-        $sql = "INSERT INTO custom_orders 
-        (user_id, file_path, quantity, print_type, paper_size, notes, status, order_date, created_at) 
-        VALUES (?, ?, ?, ?, ?, ?, 'pending', NOW(), NOW())";
+// after file upload is handled in custom_orders.php
+$params = http_build_query([
+    'order_type' => 'custom',
+    'pages'      => $pages,
+    'print_type' => $print_type,
+    'paper_size' => $paper_size,
+    'notes'      => $notes,
+    'file_name'  => $uploaded_file_name // store uploaded file name/path
+]);
 
-$stmt = $conn->prepare($sql);
-$stmt->bind_param("isisss", $user_id, $uploaded_file, $quantity, $print_type, $paper_size, $notes);
+header("Location: ../OrderPage/Payment/payment.php?$params");
+exit();
 
-        if ($stmt->execute()) {
-            $success_message = "Custom order placed successfully! Order ID: " . $stmt->insert_id;
-            // Clear form data
-            $_POST = array();
-            //navigate to orders page after a delay
-            header("refresh:3;url=../myorder/myorder.php");
-        } else {
-            $error_message = "Error placing order: " . $stmt->error;
-            // Delete uploaded file if DB insert fails
-            if (file_exists($uploaded_file)) {
-                unlink($uploaded_file);
-            }
-        }
-        $stmt->close();
-    }
+
 }
 
 $conn->close();
@@ -330,13 +321,17 @@ $conn->close();
             <div class="form-group">
                 <label class="form-label">Upload Document *</label>
                 <div class="file-upload-area">
-                    <input type="file" id="file_upload" name="file_upload" accept=".pdf,.doc,.docx,.txt,.rtf" required onchange="showFileInfo(this)">
+                    <input type="file" id="file_upload" name="file_upload" accept=".pdf,.doc,.docx,.txt,.rtf" required onchange="showFileInfo(this)" title="Choose a file to upload">
                     <label for="file_upload" class="file-upload-btn">
                         <i class="fas fa-cloud-upload-alt"></i> Choose File
                     </label>
                     <p style="margin-top: 0.5rem; color: var(--secondary-color);">Supported: PDF, DOC, DOCX, TXT, RTF (Max 5MB)</p>
                     <div id="file-info" class="file-info" style="display: none;"></div>
                 </div>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Pages *</label>
+                <input type="number" class="form-control" name="pages" min="1" max="100" value="1" required>
             </div>
 
             <div class="form-group">

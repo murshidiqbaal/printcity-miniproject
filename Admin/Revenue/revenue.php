@@ -171,7 +171,7 @@ $months = [
     <div class="bg-white p-6 rounded-lg shadow mb-6 flex flex-wrap gap-6 justify-center md:justify-start">
       <div class="text-center md:text-left">
         <div class="text-sm text-gray-500">Total Revenue</div>
-        <div class="text-2xl font-bold text-green-600">$<?= number_format($summary['total_revenue'], 2) ?></div>
+        <div class="text-2xl font-bold text-green-600"><?= number_format($summary['total_revenue'], 2) ?></div>
       </div>
       <div class="text-center md:text-left">
         <div class="text-sm text-gray-500">Total Orders</div>

@@ -491,8 +491,8 @@ $result = mysqli_query($conn, $sql);
                 <li><a href="../myorder/myorder.php">MyOrders</a></li>
                 <li><a href="../favourite/favourite.php">Favourites</a></li>
                 <li><a href="../myprofile/myprofile.php">MyProfile</a></li>
-                <li><a href="#footer-content">About</a></li>
                 <li><a href="../customization/custom_orders.php">Print</a></li>
+                <li><a href="#footer-content">About</a></li>
                 <li><a href="#products" class="nav-cta">Order Now</a></li>
                 
             </ul>

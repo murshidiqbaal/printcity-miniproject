@@ -14,23 +14,34 @@ if (!$conn) {
     die("Connection failed: " . mysqli_connect_error());
 }
 
+
+// Database configuration
+$host = "localhost";              // WAMP default
+$dbname = "printcity";       // Replace with your actual DB name
+$username = "root";               // WAMP default username
+$password = "";                   // WAMP default password (usually empty)
+
+// Create PDO connection
+try {
+    $pdo = new PDO("mysql:host=$host;dbname=$dbname;charset=utf8", $username, $password);
+    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+} catch (PDOException $e) {
+    die("Database connection failed: " . $e->getMessage());
+}
+
+
 $user_id = $_SESSION['user_id']; // check this is same as your column in DB
-$stmt = $conn->prepare("SELECT username, email, phone FROM users WHERE user_id = ?");
-$stmt->bind_param("i", $user_id);
-$stmt->execute();
-$res = $stmt->get_result();
-$user_data = $res->fetch_assoc();
+            $stmt = $pdo->prepare("SELECT * FROM users WHERE user_id=?");
+            $stmt->execute([$user_id]);
+            $user_data = $stmt->fetch(PDO::FETCH_ASSOC);
 
-
-// 2. Fetch from user_profiles table (overrides users table if exists)
-$stmt = $conn->prepare("SELECT phone, email FROM user_profiles WHERE user_id = ?");
-$stmt->bind_param("i", $user_id);
-$stmt->execute();
-$profile_data = $stmt->get_result()->fetch_assoc();
-$stmt->close();
-// Final values: prefer profile_data if exists
-$current_phone = $profile_data['phone'] ?? $user_data['phone'] ?? '';
-$current_email = $profile_data['email'] ?? $user_data['email'] ?? '';
+    // 2. Fetch from user_profiles table (overrides users table if exists)
+    $stmt = $pdo->prepare("SELECT phone, email FROM user_profiles WHERE user_id = ?");
+    $stmt->execute([$user_id]);
+    $profile_data = $stmt->fetch(PDO::FETCH_ASSOC);
+    // Final values: prefer profile_data if exists
+    $current_phone = $profile_data['phone'] ?? $user_data['phone'] ?? '';
+    $current_email = $profile_data['email'] ?? $user_data['email'] ?? '';
 
 
 $conn = mysqli_connect("localhost", "root", "", "printcity");
@@ -51,7 +62,7 @@ $error_message = '';
 
 // Fetch user profile data first (to populate form)
 $sql = "SELECT * FROM user_profiles WHERE user_id = ?";
-$stmt = $conn->prepare($sql);
+$stmt = $conn->prepare($sql); 
 $stmt->bind_param("i", $user_id);
 $stmt->execute();
 $result = $stmt->get_result();
@@ -823,41 +834,78 @@ $profile_picture_path = !empty($user_data['profile_picture'])
                             </div>
                             <div class="form-group">
     <label for="email" class="form-label">Email</label>
-    <input type="text" id="email" name="email" class="form-control" 
-           value="<?php echo htmlspecialchars($current_email); ?>">
+    <input type="email" id="email" name="email" class="form-control"
+       value="<?php echo htmlspecialchars($current_email); ?>" required>
+<small id="emailError" style="color:red; display:none;">Invalid email</small>
+
+<script>
+document.getElementById("email").addEventListener("input", function() {
+    const emailPattern = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-z]{2,}$/;
+    const errorMsg = document.getElementById("emailError");
+
+    if (!emailPattern.test(this.value)) {
+        errorMsg.style.display = "inline";
+    } else {
+        errorMsg.style.display = "none";
+    }
+});
+</script>
+
 </div>
-                            <div class="form-group">
+     <div class="form-group">
     <label for="phone" class="form-label">Phone</label>
-    <input type="text" id="phone" name="phone" class="form-control" 
-           value="<?php echo htmlspecialchars($current_phone); ?>">
+    <input type="text" id="phone" name="phone" class="form-control"
+           value="<?php echo htmlspecialchars($user_data['phone'] ?? ''); ?>" 
+           required
+           pattern="^[+]?[0-9]{10}$" 
+           title="Phone number must be 10 digits (can start with +)">
 </div>
+
 
 
                             <div class="form-group">
                                 <label for="address" class="form-label">Address</label>
-                                <input type="text" id="address" name="address" class="form-control" value="<?php echo htmlspecialchars($user_data['address'] ?? ''); ?>">
+                                <input type="text" id="address" name="address" class="form-control" value="<?php echo htmlspecialchars($user_data['address'] ?? ''); ?>" required pattern=".{5,100}" title="Address must be between 5 and 100 characters."
+                                title="Address must be between 5 and 100 characters.">
                                 <div class="form-error"><?php echo htmlspecialchars($errors['address'] ?? ''); ?></div>
                             </div>
                             <div class="form-group">
                                 <label for="city" class="form-label">City</label>
-                                <input type="text" id="city" name="city" class="form-control" value="<?php echo htmlspecialchars($user_data['city'] ?? ''); ?>">
+                                <input type="text" id="city" name="city" class="form-control" value="<?php echo htmlspecialchars($user_data['city'] ?? ''); ?>" required pattern="^[a-zA-Z\s]{2,50}$" title="City must be 2-50 characters, letters and spaces only.">
                                 <div class="form-error"><?php echo htmlspecialchars($errors['city'] ?? ''); ?></div>
                             </div>
                             <div class="form-group">
                                 <label for="state" class="form-label">State</label>
-                                <input type="text" id="state" name="state" class="form-control" value="<?php echo htmlspecialchars($user_data['state'] ?? ''); ?>">
+                                <input type="text" id="state" name="state" class="form-control" value="<?php echo htmlspecialchars($user_data['state'] ?? ''); ?>" required pattern="^[a-zA-Z\s]{2,50}$" title="State must be 2-50 characters, letters and spaces only.">
                                 <div class="form-error"><?php echo htmlspecialchars($errors['state'] ?? ''); ?></div>
                             </div>  
                             <div class="form-group">
                                 <label for="zip_code" class="form-label">Zip Code</label>
-                                <input type="text" id="zip_code" name="zip_code" class="form-control" value="<?php echo htmlspecialchars($user_data['zip_code'] ?? ''); ?>">
+                                <input type="text" id="zip_code" name="zip_code" class="form-control" value="<?php echo htmlspecialchars($user_data['zip_code'] ?? ''); ?>" required pattern="^\d{5,10}$" title="Zip code must be 5-10 digits.">
                                 <div class="form-error"><?php echo htmlspecialchars($errors['zip_code'] ?? ''); ?></div>
                             </div>
                             <div class="form-group">
-                                <label for="country" class="form-label">Country</label>
-                                <input type="text" id="country" name="country" class="form-control" value="<?php echo htmlspecialchars($user_data['country'] ?? 'India'); ?>">
-                                <div class="form-error"><?php echo htmlspecialchars($errors['country'] ?? ''); ?></div>
-                            </div>
+    <label for="country" class="form-label">Country</label>
+    <select id="country" name="country" class="form-control" required>
+        <?php
+        // List of countries (you can add more if needed)
+        $countries = [
+            "India", "United States", "United Kingdom", "Canada", "Australia",
+            "Germany", "France", "Italy", "Spain", "China", "Japan", "Brazil"
+        ];
+
+        // Selected country (from database)
+        $selectedCountry = $user_data['country'] ?? 'India';
+
+        foreach ($countries as $country) {
+            $selected = ($country === $selectedCountry) ? 'selected' : '';
+            echo "<option value=\"" . htmlspecialchars($country) . "\" $selected>" . htmlspecialchars($country) . "</option>";
+        }
+        ?>
+    </select>
+    <div class="form-error"><?php echo htmlspecialchars($errors['country'] ?? ''); ?></div>
+</div>
+
                              <div class="form-group">
         <label for="profile_picture" class="form-label">Profile Picture</label>
         <input type="file" id="profile_picture" name="profile_picture" class="form-control" accept="image/*">
