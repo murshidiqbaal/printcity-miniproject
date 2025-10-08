@@ -287,7 +287,7 @@ $result = mysqli_query($conn, $sql);
       align-items: center;
       gap: 0.75rem;
       padding: 1.2rem 2.5rem;
-      background: linear-gradient(45deg, #ff6b6b, #ee5a24, #ff6b6b);
+      background: linear-gradient(45deg, #000000ff, rgb(196, 196, 8), rgb(196, 200, 20));
       background-size: 200% 200%;
       color: white;
       text-decoration: none;
@@ -384,10 +384,11 @@ $result = mysqli_query($conn, $sql);
         width: 100%;
         height: 500vh;
         position: relative;
-        background: rgb(196, 196, 8);
+        background: linear-gradient(to bottom, rgba(120, 219, 255, 0.2) 0%,rgb(196, 196, 8) 100%);
         display: flex;
       }
       .left {
+        
         height: 100vh;
         flex-basis: 50%;
         position: sticky;
@@ -547,7 +548,7 @@ $result = mysqli_query($conn, $sql);
         <div class="sub-title">
          One-stop destination for all printing needs, offering high-quality and customized printing services for businesses, students, and individuals. Whether you need brochures, business cards, banners, flyers, or personalized gifts, PrintCity delivers professional results with quick turnaround times. We combine the latest printing technology with creative design to bring your ideas to life, ensuring every print is sharp, vibrant, and impactful. At PrintCity, customer satisfaction is our top priority, and we are committed to providing affordable prices, friendly service, and reliable solutions for every project.
           <br />
-          <button>See More Details</button>
+          <button onclick="location.href='#footer-content'">See More Details</button>
         </div>
       </div>
       <div class="right">
@@ -575,7 +576,7 @@ $result = mysqli_query($conn, $sql);
     </div>
  
 
- <div>
+ <div style="background-color: #0f0f23;">
 <?php include("../ProductPage/productpage.php"); ?>
 </div>
 

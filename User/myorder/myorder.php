@@ -37,14 +37,13 @@ $regular_result = $stmt_regular->get_result();
 // Fetch custom orders
 $stmt_custom = $conn->prepare("
     SELECT 
-        co.id AS order_id,
-        co.file_path,
+        co.order_id,
+        co.file_name AS file_path,
         co.quantity,
         co.print_type,
         co.paper_size,
         co.notes,
         co.status,
-        co.order_date,
         co.created_at
     FROM custom_orders co
     WHERE co.user_id = ?
@@ -54,6 +53,8 @@ $stmt_custom = $conn->prepare("
 $stmt_custom->bind_param("i", $user_id);
 $stmt_custom->execute();
 $custom_result = $stmt_custom->get_result();
+
+
 ?>
 
 <!DOCTYPE html>
@@ -623,107 +624,118 @@ $custom_result = $stmt_custom->get_result();
     </div>
 
     <!-- Custom Orders Section -->
-    <div class="section-header">
-        <i class="fas fa-file-upload"></i>
-        Custom Orders
-    </div>
-    <div class="order-grid">
-        <?php if ($custom_result->num_rows > 0): ?>
-            <?php while ($custom_order = $custom_result->fetch_assoc()): 
-                // Determine status class for badge (same logic)
-                $status_class = '';
-                switch(strtolower($custom_order['status'])) {
-                    case 'pending': $status_class = 'status-pending'; break;
-                    case 'processing': $status_class = 'status-processing'; break;
-                    case 'shipped': case 'completed': $status_class = 'status-completed'; break;
-                    case 'cancelled': $status_class = 'status-cancelled'; break;
-                    case 'delivered': $status_class = 'status-delivered'; break;
-                }
+<div class="section-header">
+    <i class="fas fa-file-upload"></i>
+    Custom Orders
+</div>
+<div class="order-grid">
+    <?php if ($custom_result->num_rows > 0): ?>
+        <?php while ($custom_order = $custom_result->fetch_assoc()): 
 
-                // Get file extension and determine icon
-                $file_extension = '';
-                $icon_class = 'fas fa-file-alt'; // Default fallback
-                $file_type_class = ''; // For styling
-                $file_type_label = 'File';
+            // Use default status if not set
+            $status = $custom_order['status'] ?? 'Pending';
+            $status_lower = strtolower($status);
 
-                if (!empty($custom_order['file_path'])) {
-                    $path_info = pathinfo($custom_order['file_path']);
-                    $file_extension = strtolower($path_info['extension'] ?? '');
-                    
-                    switch ($file_extension) {
-                        case 'pdf':
-                            $icon_class = 'fas fa-file-pdf';
-                            $file_type_class = 'file-icon-pdf';
-                            $file_type_label = 'PDF';
-                            break;
-                        case 'doc':
-                        case 'docx':
-                            $icon_class = 'fas fa-file-word';
-                            $file_type_class = 'file-icon-doc';
-                            $file_type_label = 'Word';
-                            break;
-                        case 'txt':
-                            $icon_class = 'fas fa-file-alt';
-                            $file_type_class = 'file-icon-txt';
-                            $file_type_label = 'Text';
-                            break;
-                        case 'rtf':
-                            $icon_class = 'fas fa-file-alt';
-                            $file_type_class = 'file-icon-rtf';
-                            $file_type_label = 'RTF';
-                            break;
-                        default:
-                            $icon_class = 'fas fa-file';
-                            $file_type_label = strtoupper($file_extension);
-                            break;
-                    }
+            // Determine status class for badge
+            $status = $custom_order['status'] ?? 'Pending'; // Fallback
+$status_class = '';
+switch(strtolower($status)) {
+    case 'pending': $status_class = 'status-pending'; break;
+    case 'processing': $status_class = 'status-processing'; break;
+    case 'shipped': case 'completed': $status_class = 'status-completed'; break;
+    case 'cancelled': $status_class = 'status-cancelled'; break;
+    case 'delivered': $status_class = 'status-delivered'; break;
+}
+
+
+            // Determine card class
+            $card_class = '';
+            if ($status_lower === 'delivered') {
+                $card_class = 'status-delivered';
+            } elseif ($status_lower === 'cancelled') {
+                $card_class = 'status-cancelled';
+            }
+
+            // Determine file icon
+            $file_extension = '';
+            $icon_class = 'fas fa-file-alt'; // Default fallback
+            $file_type_class = ''; 
+            $file_type_label = 'File';
+            if (!empty($custom_order['file_name'])) {
+                $path_info = pathinfo($custom_order['file_name']);
+                $file_extension = strtolower($path_info['extension'] ?? '');
+                
+                switch ($file_extension) {
+                    case 'pdf':
+                        $icon_class = 'fas fa-file-pdf';
+                        $file_type_class = 'file-icon-pdf';
+                        $file_type_label = 'PDF';
+                        break;
+                    case 'doc':
+                    case 'docx':
+                        $icon_class = 'fas fa-file-word';
+                        $file_type_class = 'file-icon-doc';
+                        $file_type_label = 'Word';
+                        break;
+                    case 'txt':
+                        $icon_class = 'fas fa-file-alt';
+                        $file_type_class = 'file-icon-txt';
+                        $file_type_label = 'Text';
+                        break;
+                    case 'rtf':
+                        $icon_class = 'fas fa-file-alt';
+                        $file_type_class = 'file-icon-rtf';
+                        $file_type_label = 'RTF';
+                        break;
+                    default:
+                        $icon_class = 'fas fa-file';
+                        $file_type_label = strtoupper($file_extension);
+                        break;
                 }
-            ?>
-            <?php
-                $card_class = '';
-                $status_lower = strtolower($custom_order['status']);
-                if ($status_lower === 'delivered') {
-                    $card_class = 'status-delivered';
-                } elseif ($status_lower === 'cancelled') {
-                    $card_class = 'status-cancelled';
-                }
-            ?>
-            <div class="order-card <?= $card_class ?> custom-order-card">
-                <div class="custom-order-image <?= $file_type_class ?>" data-file-type="<?= $file_type_label ?>">
-                    <i class="<?= $icon_class ?>"></i>
-                </div>
-                <div class="custom-order-details">
-                    <h3 class="custom-product-name">Custom Print Order <span class="file-extension-badge"><?= $file_type_label ?></span></h3>
-                    <div class="custom-meta">
-                        <span>Qty: <?= $custom_order['quantity'] ?></span>
-                        <span>Type: <?= ucfirst(str_replace('_', ' ', $custom_order['print_type'])) ?></span>
-                    </div>
-                    <div class="custom-meta">
-                        <span>Size: <?= $custom_order['paper_size'] ?></span>
-                        <span><?= date('M d, Y', strtotime($custom_order['order_date'])) ?></span>
-                    </div>
-                    <?php if (!empty($custom_order['notes'])): ?>
-                        <div class="custom-meta">
-                            <span>Notes: <?= substr($custom_order['notes'], 0, 50) . (strlen($custom_order['notes']) > 50 ? '...' : '') ?></span>
-                        </div>
-                    <?php endif; ?>
-                    <span class="status-badge <?= $status_class ?>">
-                        <?= htmlspecialchars($custom_order['status']) ?>
-                    </span>
-                    <a href="trackorder.php?order_id=<?= $custom_order['order_id'] ?>&type=custom" class="view-details-btn">
-                        <i class="fas fa-eye"></i> View Details
-                    </a>
-                </div>
+            }
+
+            // Safely handle order date
+            $order_date_display = !empty($custom_order['order_date']) ? 
+                date('M d, Y', strtotime($custom_order['order_date'])) : 
+                date('M d, Y', strtotime($custom_order['created_at'] ?? 'now'));
+        ?>
+        <div class="order-card <?= $card_class ?> custom-order-card">
+            <div class="custom-order-image <?= $file_type_class ?>" data-file-type="<?= $file_type_label ?>">
+                <i class="<?= $icon_class ?>"></i>
             </div>
-            <?php endwhile; ?>
-        <?php else: ?>
-            <div class="no-orders">
-                <i class="fas fa-file-upload"></i>
-                <h3>No custom orders found.</h3>
-                <p>You haven't placed any custom orders yet. <a href="custom_order.php">Create one now</a>.</p>
+            <div class="custom-order-details">
+                <h3 class="custom-product-name">
+                    Custom Print Order <span class="file-extension-badge"><?= $file_type_label ?></span>
+                </h3>
+                <div class="custom-meta">
+                    <span>Qty: <?= intval($custom_order['quantity'] ?? 1) ?></span>
+                    <span>Type: <?= ucfirst(str_replace('_', ' ', $custom_order['print_type'] ?? 'N/A')) ?></span>
+                </div>
+                <div class="custom-meta">
+                    <span>Size: <?= htmlspecialchars($custom_order['paper_size'] ?? 'N/A') ?></span>
+                    <span><?= $order_date_display ?></span>
+                </div>
+                <?php if (!empty($custom_order['notes'])): ?>
+                    <div class="custom-meta">
+                        <span>Notes: <?= htmlspecialchars(substr($custom_order['notes'], 0, 50)) ?><?= strlen($custom_order['notes']) > 50 ? '...' : '' ?></span>
+                    </div>
+                <?php endif; ?>
+                <span class="status-badge <?= $status_class ?>"><?= htmlspecialchars($status) ?></span>
+                <a href="trackorder.php?order_id=<?= intval($custom_order['order_id']) ?>&type=custom" class="view-details-btn">
+                    <i class="fas fa-eye"></i> View Details
+                </a>
             </div>
-        <?php endif; ?>
-    </div>
+        </div>
+        <?php endwhile; ?>
+    <?php else: ?>
+        <div class="no-orders">
+            <i class="fas fa-file-upload"></i>
+            <h3>No custom orders found.</h3>
+            <p>You haven't placed any custom orders yet. <a href="custom_order.php">Create one now</a>.</p>
+        </div>
+    <?php endif; ?>
+</div>
+
 </div>
 
 <?php

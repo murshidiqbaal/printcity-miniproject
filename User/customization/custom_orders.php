@@ -20,7 +20,7 @@ $error_message = '';
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $pages = intval($_POST['pages'] ?? 1);
     $quantity = intval($_POST['quantity'] ?? 1);
-    $print_type = mysqli_real_escape_string($conn, $_POST['print_type'] ?? 'color');
+    $print_type = mysqli_real_escape_string($conn, $_POST['print_type'] ?? 'black_white');
     $paper_size = mysqli_real_escape_string($conn, $_POST['paper_size'] ?? 'A4');
     $notes = mysqli_real_escape_string($conn, $_POST['notes'] ?? '');
     
@@ -55,15 +55,18 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $error_message = "Please select a file to upload.";
     }
 
-// after file upload is handled in custom_orders.php
+$file_extension = strtolower(pathinfo($uploaded_file, PATHINFO_EXTENSION));
+
 $params = http_build_query([
     'order_type' => 'custom',
     'pages'      => $pages,
     'print_type' => $print_type,
     'paper_size' => $paper_size,
     'notes'      => $notes,
-    'file_name'  => $uploaded_file_name // store uploaded file name/path
+    'file_name'  => $uploaded_file,
+    'file_type'  => $file_extension
 ]);
+
 
 header("Location: ../OrderPage/Payment/payment.php?$params");
 exit();
@@ -342,13 +345,14 @@ $conn->close();
             <div class="form-group">
                 <label class="form-label">Print Type *</label>
                 <div class="radio-group">
+                    
                     <div class="radio-option">
-                        <input type="radio" id="color" name="print_type" value="color" checked>
-                        <label for="color">Color Printing</label>
+                        <input type="radio" id="bw" name="print_type" value="black_white" checked>
+                        <label for="bw">Black & White</label>
                     </div>
                     <div class="radio-option">
-                        <input type="radio" id="bw" name="print_type" value="black_white">
-                        <label for="bw">Black & White</label>
+                        <input type="radio" id="color" name="print_type" value="color" >
+                        <label for="color">Color Printing</label>
                     </div>
                 </div>
             </div>
@@ -357,7 +361,10 @@ $conn->close();
                 <label class="form-label">Paper Size *</label>
                 <select class="form-control" name="paper_size" required>
                     <option value="A4">A4</option>
+                    <option value="A5">A5</option>
                     <option value="A3">A3</option>
+                    <option value="A2">A2</option>
+                    <option value="A1">A1</option>
                     <option value="Letter">Letter</option>
                     <option value="Legal">Legal</option>
                 </select>

@@ -70,11 +70,19 @@
 }
 
 </style>
-
+<script src="https://cdn.tailwindcss.com"></script>
 </head>
+
+  
+ 
 <body class="bg-gray-50">
     <div class="min-h-screen bg-gray-50 p-6">
         <div class="bg-white p-4 mb-4 rounded-lg shadow">
+<a href="../HomeScreen/indexAdmin.php" 
+     style="position: absolute; top: 15px; left: 15px; font-size: 1.5rem; color: black; text-decoration: none;">
+    <i class="fas fa-arrow-left"></i>
+  </a>
+            
             <h2 class="text-xl font-semibold text-gray-900">Order Management</h2>
             <p class="text-sm text-gray-600 mt-1">Manage both product and custom orders</p>
         </div>
@@ -159,33 +167,36 @@ $sql_regular = "SELECT
 $result_regular = mysqli_query($conn, $sql_regular);
 
 // Fetch custom orders (join with user_profiles for customer details)
-$sql_custom = "SELECT 
-            co.id AS order_id,
-            up.full_name AS customer_name,
-            up.address,
-            co.file_path,
-            co.quantity,
-            co.print_type,
-            co.paper_size,
-            co.notes,
-            co.status,
-            co.order_date,
-            'custom' AS order_type
-        FROM custom_orders co
-        LEFT JOIN user_profiles up ON co.user_id = up.user_id
-        ORDER BY co.order_date DESC";
+$query = "
+SELECT 
+    co.order_id AS order_id,
+    up.full_name AS customer_name,
+    up.address,
+    co.file_name,
+    co.quantity,
+    co.print_type,
+    co.paper_size,
+    co.notes,
+    co.status,
+    co.created_at AS order_date,
+    'custom' AS order_type
+FROM custom_orders co
+LEFT JOIN user_profiles up ON co.user_id = up.user_id
+ORDER BY co.created_at DESC
+";
 
-$result_custom = mysqli_query($conn, $sql_custom);
+
+$result_custom = mysqli_query($conn, $query);
 
 // Function to get file extension for custom orders
-function getFileExtension($file_path) {
-    if (empty($file_path)) return 'unknown';
-    return strtolower(pathinfo($file_path, PATHINFO_EXTENSION));
+function getFileExtension($file_name) {
+    if (empty($file_name)) return 'unknown';
+    return strtolower(pathinfo($file_name, PATHINFO_EXTENSION));
 }
 
 // Function to get display name for custom order product
-function getCustomProductDisplay($file_path, $print_type, $paper_size, $notes = '') {
-    $ext = getFileExtension($file_path);
+function getCustomProductDisplay($file_name, $print_type, $paper_size, $notes = '') {
+    $ext = getFileExtension($file_name);
     $type_label = ucfirst(str_replace('_', ' ', $print_type ?? 'unknown')) . ' on ' . strtoupper($paper_size ?? 'A4');
     $notes_preview = !empty($notes) ? ' - ' . substr($notes, 0, 30) . '...' : '';
     return "Custom: " . strtoupper($ext) . " - " . $type_label . $notes_preview;
@@ -223,7 +234,7 @@ if (mysqli_num_rows($result_custom) > 0) {
     $has_orders = true;
     while ($custom_order = mysqli_fetch_assoc($result_custom)) {
         $status_lower = strtolower($custom_order['status']);
-        $product_display = getCustomProductDisplay($custom_order['file_path'], $custom_order['print_type'], $custom_order['paper_size'], $custom_order['notes']);
+        $product_display = getCustomProductDisplay($custom_order['file_name'], $custom_order['print_type'], $custom_order['paper_size'], $custom_order['notes']);
         $customer_name = !empty($custom_order['customer_name']) ? $custom_order['customer_name'] : 'Unknown User';
         $customer_address = !empty($custom_order['address']) ? $custom_order['address'] : 'No address provided';
         echo "<tr class='order-row' data-type='custom' style='background-color: #f8f9ff;'>
@@ -234,7 +245,7 @@ if (mysqli_num_rows($result_custom) > 0) {
                 </td>
                 <td class='px-6 py-4 whitespace-nowrap'>
                     <div class='text-sm text-gray-900 font-medium text-blue-600'>" . htmlspecialchars($product_display) . "</div>
-                    <small class='text-gray-500 block'>File: " . htmlspecialchars(basename($custom_order['file_path'])) . "</small>
+                    <small class='text-gray-500 block'>File: " . htmlspecialchars(basename($custom_order['file_name'])) . "</small>
                 </td>
                 <td class='px-6 py-4 whitespace-nowrap text-sm text-gray-500'>{$custom_order['quantity']}</td>
                 <td class='px-6 py-4 whitespace-nowrap text-sm text-gray-500'>" . date("Y-m-d", strtotime($custom_order['order_date'])) . "</td>

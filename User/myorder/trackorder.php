@@ -15,6 +15,54 @@ $user_id = intval($_SESSION['user_id']);
 $order_id = intval($_GET['order_id'] ?? 0);
 $type = $_GET['type'] ?? 'normal'; // normal | custom
 
+// Order cancellation handler
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cancel_submit'])) {
+    $order_id_post = intval($_POST['order_id'] ?? 0);
+    $type_post = $_POST['type'] ?? 'normal';
+    $current_status_cancel = "";
+    $allowed_statuses = ['ordered', 'processing', 'shipped'];
+
+    // Fetch current order status
+    if ($type_post === 'custom') {
+        $stmt = $conn->prepare("SELECT status FROM custom_orders WHERE id = ? AND user_id = ?");
+    } else {
+        $stmt = $conn->prepare("SELECT status FROM orders WHERE order_id = ? AND user_id = ?");
+    }
+    $stmt->bind_param("ii", $order_id_post, $user_id);
+    $stmt->execute();
+    $stmt->bind_result($current_status_cancel);
+    $stmt->fetch();
+    $stmt->close();
+
+    // Validate
+    if (in_array(strtolower($current_status_cancel), $allowed_statuses)) {
+        // Update status to Cancelled
+        if ($type_post === 'custom') {
+            $stmt_update = $conn->prepare("UPDATE custom_orders SET status = 'Cancelled' WHERE id = ? AND user_id = ?");
+        } else {
+            $stmt_update = $conn->prepare("UPDATE orders SET status = 'Cancelled' WHERE order_id = ? AND user_id = ?");
+        }
+        $stmt_update->bind_param("ii", $order_id_post, $user_id);
+        if ($stmt_update->execute()) {
+            $_SESSION['message_type'] = 'success';
+            $_SESSION['message'] = "Order has been cancelled successfully!";
+            header("Location: " . $_SERVER['PHP_SELF'] . "?order_id=" . $order_id_post . "&type=" . $type_post);
+            exit();
+        } else {
+            $_SESSION['message_type'] = 'error';
+            $_SESSION['message'] = "Failed to cancel order.";
+            header("Location: " . $_SERVER['PHP_SELF'] . "?order_id=" . $order_id_post . "&type=" . $type_post);
+            exit();
+        }
+        $stmt_update->close();
+    } else {
+        $_SESSION['message_type'] = 'error';
+        $_SESSION['message'] = "Order cannot be cancelled at this status.";
+        header("Location: " . $_SERVER['PHP_SELF'] . "?order_id=" . $order_id_post . "&type=" . $type_post);
+        exit();
+    }
+}
+
 // Feedback submission handler
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['feedback_submit'])) {
     $rating = intval($_POST['rating'] ?? 0);
@@ -51,26 +99,28 @@ if ($current_status === 'Delivered' && $rating >= 1 && $rating <= 5) {
 // Fetch order details
 // ========================
 if ($type === 'custom') {
-    $stmt = $conn->prepare("
-        SELECT 
-            co.id AS order_id,
-            co.status,
-            co.order_date,
-            co.quantity,
-            co.print_type,
-            co.paper_size,
-            co.notes,
-            co.file_path,
-            u.username AS customer_name,
-            mp.email,
-            mp.phone,
-            mp.address
-        FROM custom_orders co
-        JOIN users u ON co.user_id = u.user_id
-        LEFT JOIN user_profiles mp ON co.user_id = mp.user_id
-        WHERE co.user_id = ? AND co.id = ?
-        LIMIT 1
-    ");
+   $stmt = $conn->prepare("
+    SELECT 
+        co.order_id AS order_id,
+        co.status,
+        co.created_at AS order_date,  -- Use created_at instead
+        co.quantity,
+        co.print_type,
+        co.paper_size,
+        co.notes,
+        co.file_name AS file_path,
+        u.username AS customer_name,
+        mp.email,
+        mp.phone,
+        mp.address
+    FROM custom_orders co
+    JOIN users u ON co.user_id = u.user_id
+    LEFT JOIN user_profiles mp ON co.user_id = mp.user_id
+    WHERE co.user_id = ?
+      AND co.order_id = ?
+");
+
+
 } else {
     $stmt = $conn->prepare("
         SELECT 
@@ -476,6 +526,8 @@ body::before {
     color: white;
 }
 
+
+
 .timeline-icon.current {
     background: linear-gradient(135deg, #3b82f6, #1d4ed8);
     border-color: #3b82f6;
@@ -834,8 +886,10 @@ body::before {
 </div>
 
 </div>
+      
 
-<?php if ($current_status === 'delivered'): ?>
+        <!-- Feedback Form (only if delivered) -->
+       <?php if ($current_status === 'delivered'): ?>
     <div class="order-card">
         <h2 class="text-xl font-semibold text-gray-800 mb-4">Leave Feedback</h2>
 
@@ -883,7 +937,12 @@ body::before {
                 </div>
               
             </div>
+       
+            
         </div>
+
+        
+
     </div>
 
     <script>
@@ -903,7 +962,19 @@ body::before {
                 // Here you would make an AJAX call to check for status updates
             }, 30000);
         });
+
+        // Confirmation for cancel button (already handled in form onsubmit, but can enhance if needed)
+            const cancelButtons = document.querySelectorAll('button[name="cancel_submit"]');
+            cancelButtons.forEach(button => {
+                button.addEventListener('click', function(e) {
+                    if (!confirm('Are you sure you want to cancel this order? This action cannot be undone.')) {
+                        e.preventDefault();
+                    }
+                });
+            });
     </script>
+
+    
 </body>
 </html>
 

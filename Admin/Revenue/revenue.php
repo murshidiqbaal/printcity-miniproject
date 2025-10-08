@@ -118,10 +118,23 @@ $months = [
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Revenue Dashboard</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
 </head>
 <body class="bg-gray-100 min-h-screen p-6">
-  <div class="max-w-7xl mx-auto">
-    <h1 class="text-3xl font-bold mb-6 text-gray-800">Revenue Dashboard</h1>
+
+
+  <div class="max-w-7xl mx-auto relative">
+  
+     <!-- Back Arrow -->
+    <a href="../HomeScreen/indexAdmin.php" 
+       class="absolute left-0 -top-2 text-gray-700 hover:text-indigo-600"
+       style="font-size: 1.8rem; text-decoration: none;">
+      <i class="fas fa-arrow-left"></i>
+    </a>
+
+    <!-- Heading -->
+    <h1 class="text-3xl font-bold mb-6 text-gray-800 text-center">Revenue Dashboard</h1>
 
     <!-- Filters -->
     <form method="GET" class="bg-white p-6 rounded-lg shadow mb-6 grid grid-cols-1 md:grid-cols-4 gap-4 items-end">

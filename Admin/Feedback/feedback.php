@@ -229,11 +229,20 @@ function h($str) {
     background: #101720;
   }
 </style>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
 </head>
 <body>
-<div class="container">
-  
+<div class="container relative mx-auto">
+  <!-- Back Arrow -->
+  <a href="../HomeScreen/indexAdmin.php" 
+     class="absolute left-4 top-4 z-50 text-gray-700 hover:text-indigo-600 text-2xl">
+    <i class="fas fa-arrow-left"></i>
+  </a>
+
   <main>
+  
     <h1>Product Feedbacks</h1>
     <div class="feedback-table-wrapper" role="region" aria-live="polite" aria-label="User feedback table">
     <?php if (!empty($feedbacks)): ?>

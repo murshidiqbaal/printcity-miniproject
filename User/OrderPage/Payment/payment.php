@@ -78,9 +78,9 @@ $filePath = $file_name ? $uploads_dir . '/' . basename($file_name) : null;
     $unit_price = (strtolower($print_type) === 'color') ? 10 : 1;
     $subtotal = ($unit_price * $pages) * $quantity;
     $tax_rate = 0.00;
-    $tax = $subtotal * $tax_rate;
+    $tax = $subtotal ;
     $shipping = 0;
-    $total_amount = $subtotal + $tax + $shipping;
+    $total_amount = $subtotal  + $shipping;
 
     $product = [
         'product_id'  => 0,
@@ -113,7 +113,7 @@ $filePath = $file_name ? $uploads_dir . '/' . basename($file_name) : null;
     $tax_rate = 0.08;
     $tax = $subtotal * $tax_rate;
     $shipping = 0;
-    $total_amount = $subtotal + $tax + $shipping;
+    $total_amount = $subtotal  + $shipping;
 }
 
 // Generate invoice number
@@ -479,7 +479,7 @@ $invoice_date = date('F j, Y');
                         <tr>
                             <th>Item</th>
                             <th>Description</th>
-                            <th>Pages</th>
+                            <th>Quantity</th>
                             <th>Unit Price</th>
                             <th>Total</th>
                         </tr>
@@ -530,19 +530,19 @@ $invoice_date = date('F j, Y');
                 <table class="totals-table">
                     <tr>
                         <td class="label">Subtotal</td>
-                        <td class="value">$<?= number_format($subtotal, 2) ?></td>
+                        <td class="value"><?= number_format($subtotal, 2) ?></td>
                     </tr>
-                    <tr>
-                        <td class="label">Tax (8%)</td>
-                        <td class="value">$<?= number_format($tax, 2) ?></td>
-                    </tr>
+                   <!-- <tr>
+                        <td class="label">Tax (5%)</td>
+                        <td class="value"><?= number_format($tax, 2) ?></td>
+                    </tr> -->
                     <tr>
                         <td class="label">Shipping</td>
                         <td class="value">Free</td>
                     </tr>
                     <tr class="total-row">
                         <td>Total Amount</td>
-                        <td>$<?= number_format($total_amount, 2) ?></td>
+                        <td><?= number_format($total_amount, 2) ?></td>
                     </tr>
                 </table>
             </div>
@@ -550,8 +550,8 @@ $invoice_date = date('F j, Y');
             <!-- Additional Info -->
             <div style="background: #e7f3ff; padding: 15px; border-radius: 8px; margin-bottom: 20px; border-left: 4px solid var(--primary-color);">
                 <p><i class="fas fa-info-circle"></i> <strong>Estimated Delivery:</strong> 3-5 business days</p>
-                <p><i class="fas fa-shield-alt"></i> <strong>Return Policy:</strong> 30-Day Money Back Guarantee</p>
-                <p><i class="fas fa-truck"></i> <strong>Shipping:</strong> Free worldwide shipping on orders over $50</p>
+                <p><i class="fas fa-shield-alt"></i> <strong>Return Policy:</strong> 7-Day Replacement</p>
+                <p><i class="fas fa-truck"></i> <strong>Shipping:</strong> Free worldwide shipping on orders over 50</p>
             </div>
 
             <!-- Payment Section -->
@@ -567,7 +567,7 @@ $invoice_date = date('F j, Y');
     <input type="hidden" name="paper_size" value="<?= htmlspecialchars($paper_size ?? '') ?>">
     <input type="hidden" name="notes" value="<?= htmlspecialchars($notes ?? '') ?>">
     <input type="hidden" name="file_name" value="<?= htmlspecialchars($file_name ?? '') ?>">
-<?php else: ?>
+<?php else: ?> 
 
                     <input type="hidden" name="product_id" value="<?= $product['product_id'] ?>">
                     <input type="hidden" name="quantity" value="<?= $quantity ?>">
@@ -578,7 +578,7 @@ $invoice_date = date('F j, Y');
                     <select name="payment_method" id="payment_method" required>
                         <option value="" disabled selected>Select a payment method</option>
                         <option value="credit_card"><i class="fas fa-credit-card"></i> Credit Card</option>
-                        <option value="debit_card"><i class="fas fa-credit-card"></i> Debit Card</option>
+                        <option value="gpay"><i class="fas fa-gpay"></i> GPay</option>
                         <option value="paypal"><i class="fab fa-paypal"></i> PayPal</option>
                         <option value="bank_transfer"><i class="fas fa-university"></i> Bank Transfer</option>
                         <option value="cash_on_delivery"><i class="fas fa-money-bill-wave"></i> Cash on Delivery</option>
@@ -605,46 +605,183 @@ $invoice_date = date('F j, Y');
 
 
     
+document.getElementById("orderForm").addEventListener("submit", function(e) {
+    e.preventDefault(); // stop normal submit
+
+    let form = this;
+    let formData = new FormData(form);
+    let paymentMethod = formData.get("payment_method");
+
+   // Payment Method Handling
+if (paymentMethod === "cash_on_delivery") {
+    // 🧾 CASE 1: Cash On Delivery
+    Swal.fire({
+        title: 'Confirm Your Order',
+        html: `
+            <div style="text-align:left">
+                <p><strong>Payment Type:</strong> Cash on Delivery</p>
+                <p><strong>Invoice No:</strong> <?= $invoice_number ?></p>
+                <p><strong>Amount Payable:</strong> ₹<?= number_format($total_amount, 2) ?></p>
+                <p><strong>Delivery Address:</strong> 
+                    <?= htmlspecialchars($user_address) ?>, 
+                    <?= htmlspecialchars($user_city) ?>, 
+                    <?= htmlspecialchars($user_state) ?> - 
+                    <?= htmlspecialchars($user_zip) ?>
+                </p>
+            </div>
+            <br>
+            <button onclick="window.print()" 
+                    style="background:#007bff;color:#fff;border:none;border-radius:5px;padding:8px 14px;cursor:pointer">
+                <i class="fas fa-print"></i> Print Bill
+            </button>
+        `,
+        icon: 'info',
+        showCancelButton: true,
+        confirmButtonText: 'OK, Confirm Order',
+        cancelButtonText: 'Cancel',
+        confirmButtonColor: '#007bff'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            processOrder();
+        }
+    });
+
+} else if (paymentMethod === "gpay" || paymentMethod === "paypal" ) {
+    // 💳 CASE 2: GPay / UPI QR
+    fetch(form.action, {
+        method: "POST",
+        body: formData
+    })
+    .then(response => response.text())
+    .then(data => {
+        Swal.fire({
+            title: 'Scan QR for Payment/Order Confirmation',
+            html: `
+                <div style="text-align: center;">
+                    <p>Please scan the QR code to complete your payment or confirm your order.</p>
+                    <img src="../../../assets/qrcode.jpg" 
+                         alt="Payment QR Code" 
+                         style="width: 200px; height: 200px; border: 1px solid #ccc; border-radius: 10px;">
+                    <p style="margin-top: 10px; font-size: 14px;">Invoice: <?= $invoice_number ?></p>
+                </div>
+            `,
+            showConfirmButton: false,
+            allowOutsideClick: false,
+            allowEscapeKey: false,
+            timer: 5000,
+            timerProgressBar: true,
+            width: '400px'
+        }).then(() => showSuccess());
+    })
+    .catch(showError);
+
+} else if (paymentMethod === "credit_card") {
+    // 💰 CASE 3: Credit Card
+    Swal.fire({
+        title: 'Enter Credit Card Details',
+        html: `
+            <input type="text" id="cardNumber" class="swal2-input" placeholder="Card Number" maxlength="16">
+            <input type="text" id="cardExpiry" class="swal2-input" placeholder="MM/YY" maxlength="5">
+            <input type="text" id="cardCVC" class="swal2-input" placeholder="CVC" maxlength="4">
+        `,
+        confirmButtonText: 'Pay Now',
+        showCancelButton: true,
+        preConfirm: () => {
+            const cardNumber = Swal.getPopup().querySelector('#cardNumber').value;
+            const cardExpiry = Swal.getPopup().querySelector('#cardExpiry').value;
+            const cardCVC = Swal.getPopup().querySelector('#cardCVC').value;
+            if (!cardNumber || !cardExpiry || !cardCVC) {
+                Swal.showValidationMessage(`Please enter all card details`);
+            }
+            return { cardNumber, cardExpiry, cardCVC };
+        }
+    }).then((result) => {
+        if (result.isConfirmed) {
+            processOrder();
+        }
+    });
+}else if (paymentMethod === "bank_transfer") {
+    // 🏦 CASE 4: Bank Transfer
+    Swal.fire({
+        title: 'Enter Your Bank Details',
+        html: `
+            <input type="text" id="userAccountName" class="swal2-input" placeholder="Your Account Name">
+            <input type="text" id="userAccountNumber" class="swal2-input" placeholder="Your Account Number">
+            <input type="text" id="userIFSC" class="swal2-input" placeholder="Your IFSC Code">
+            <input type="text" id="userBankName" class="swal2-input" placeholder="Your Bank Name">
+            <div style="text-align:left; margin-top:10px;">
+                <p>Please transfer the total amount to the following bank account:</p>
+                <p><strong>Account Name:</strong> PrintCity Pvt Ltd</p>
+                <p><strong>Account Number:</strong> 1234567890</p>
+                <p><strong>IFSC Code:</strong> PCITY0001</p>
+                <p><strong>Bank:</strong> ABC Bank</p>
+                <br>
+                <p>After completing the transfer, please email the transaction receipt to <a href="mailto:support@printcity.com">support@printcity.com</a>.</p>
+            </div>
+        `,
+        confirmButtonText: 'Done',
+        showCancelButton: true,
+        preConfirm: () => {
+            const userAccountName = Swal.getPopup().querySelector('#userAccountName').value;
+            const userAccountNumber = Swal.getPopup().querySelector('#userAccountNumber').value;
+            const userIFSC = Swal.getPopup().querySelector('#userIFSC').value;
+            const userBankName = Swal.getPopup().querySelector('#userBankName').value;
+            if (!userAccountName || !userAccountNumber || !userIFSC || !userBankName) {
+                Swal.showValidationMessage('Please enter all your bank details');
+            }
+            return { userAccountName, userAccountNumber, userIFSC, userBankName };
+        }
+    }).then((result) => {
+        if (result.isConfirmed) {
+            // Optionally, you can append these details to formData before submitting
+            formData.append('user_account_name', result.value.userAccountName);
+            formData.append('user_account_number', result.value.userAccountNumber);
+            formData.append('user_ifsc', result.value.userIFSC);
+            formData.append('user_bank_name', result.value.userBankName);
+            processOrder();
+        }
+    });
+}
 
 
-        document.getElementById("orderForm").addEventListener("submit", function(e) {
-            e.preventDefault(); // stop default form submit
+// 🔄 Reusable helper functions
+function processOrder() {
+    fetch(form.action, {
+        method: "POST",
+        body: formData
+    })
+    .then(response => response.text())
+    .then(data => showSuccess())
+    .catch(showError);
+}
 
-            // send the form using AJAX
-            let form = this;
-            let formData = new FormData(form);
+function showSuccess() {
+    Swal.fire({
+        icon: 'success',
+        title: 'Order Confirmed!',
+        html: `
+            Thank you for your purchase!<br>
+            <strong>Invoice #<?= $invoice_number ?></strong><br>
+            Your order will be processed shortly.
+        `,
+        confirmButtonText: '<i class="fas fa-shopping-bag"></i> View My Orders',
+        confirmButtonColor: '#007bff',
+        timer: 3000,
+        timerProgressBar: true
+    }).then(() => {
+        window.location.href = "../../myorder/myorder.php";
+    });
+}
 
-            fetch(form.action, {
-                method: "POST",
-                body: formData
-            })
-            .then(response => response.text())
-            .then(data => {
-                // Show success popup with creative animation
-                Swal.fire({
-                    icon: 'success',
-                    title: 'Order Confirmed!',
-                    html: 'Thank you for your purchase!<br><strong>Invoice #<?= $invoice_number ?></strong><br>Your order will be processed shortly.',
-                    confirmButtonText: '<i class="fas fa-shopping-bag"></i> View My Orders',
-                    confirmButtonColor: '#007bff',
-                    timer: 3000,
-                    timerProgressBar: true
-                }).then(() => {
-                    // navigate after popup
-                    window.location.href = "../../myorder/myorder.php"; // change to your orders page
-                });
-            })
-            .catch(error => {
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Oops...',
-                    text: 'Something went wrong. Please try again!',
-                    confirmButtonColor: '#dc3545'
-                });
-            });
-        });
-
-
+function showError() {
+    Swal.fire({
+        icon: 'error',
+        title: 'Error',
+        text: 'Something went wrong while placing the order. Please try again.',
+        confirmButtonColor: '#dc3545'
+    });
+}
+});
         
     </script>
 </body>

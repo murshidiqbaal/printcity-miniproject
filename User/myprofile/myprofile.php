@@ -336,15 +336,15 @@ $profile_picture_path = !empty($user_data['profile_picture'])
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         :root {
-            --primary-color: #007bff;
-            --secondary-color: #6c757d;
+            --primary-color: #050505ff;
+            --secondary-color: rgb(196, 196, 8);
             --success-color: #28a745;
             --danger-color: #dc3545;
-            --background: #f8f9fa;
+            --background: #000000ff;
             --white: #ffffff;
-            --text-dark: #212529;
-            --text-light: #6c757d;
-            --border-color: #dee2e6;
+            --text-dark: rgb(196, 196, 8);
+            --text-light: #FFD700;
+            --border-color: rgba(0, 0, 0, 1);
             --shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
             --shadow-lg: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
         }

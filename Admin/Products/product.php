@@ -9,7 +9,16 @@
 </head>
 <body>
 
-  <h2>Product Page</h2>
+
+  <a href="../HomeScreen/indexAdmin.php" 
+     style="position: absolute; top: 15px; left: 15px; font-size: 1.5rem; color: black; text-decoration: none;">
+    <i class="fas fa-arrow-left"></i>
+  </a>
+
+ <!-- Heading Center -->
+    <h2 class="mb-0">Product Page</h2>
+
+
 
   <!-- Floating Add Button -->
   <button class="floating-button" onclick="openForm()">+</button>

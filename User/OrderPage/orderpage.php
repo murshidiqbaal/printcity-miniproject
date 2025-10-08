@@ -23,6 +23,7 @@ $user = mysqli_fetch_assoc($user_result);
 $valid_profile = !empty($user['full_name']) && !empty($user['email']) && !empty($user['phone']) && !empty($user['address']);
 
 // Fetch selected product
+// Fetch selected product
 if (isset($_GET['product_id'])) {
     $product_id = intval($_GET['product_id']);
     $sql = "SELECT * FROM products WHERE product_id = $product_id";
@@ -33,10 +34,16 @@ if (isset($_GET['product_id'])) {
         echo "<p>Product not found!</p>";
         exit;
     }
+
+    // ✅ Get requested quantity from POST or default to 1
+    $quantity = isset($_POST['quantity']) ? intval($_POST['quantity']) : 1;
+
+   
 } else {
     echo "<p>No product selected!</p>";
     exit;
 }
+
 
 
 // If profile is incomplete, redirect
@@ -45,16 +52,6 @@ if (!$valid_profile) {
     exit();
 }
 // Only for standard product orders (not custom prints)
-if (isset($product['product_id'])) {
-    $product_id = $product['product_id'];
-
-    // Reduce stock by the quantity purchased
-    $sql = "UPDATE products SET stock = GREATEST(stock - ?, 0) WHERE product_id = ?";
-    $stmt = $conn->prepare($sql);
-    $stmt->bind_param("ii", $quantity, $product_id);
-    $stmt->execute();
-    $stmt->close();
-}
 
 ?>
 
@@ -261,17 +258,20 @@ document.addEventListener("DOMContentLoaded", function () {
             <button type="button" class="quantity-btn bg-gray-200 hover:bg-gray-300 text-gray-700 px-3 py-1 rounded-l-lg" onclick="updateQuantity(-1)">
                 <i class="fas fa-minus"></i>
             </button>
-            <input type="number" id="quantity" value="1" min="1" max="<?php echo $product['stock'] ?? 1; ?>" class="w-16 text-center border-t border-b border-gray-300 py-1" readonly>
+<input type="number" id="quantity" value="1" min="1" max="<?php echo $product['stock']; ?>" 
+       class="w-16 text-center border-t border-b border-gray-300 py-1">
             <button type="button" class="quantity-btn bg-gray-200 hover:bg-gray-300 text-gray-700 px-3 py-1 rounded-r-lg" onclick="updateQuantity(1)">
                 <i class="fas fa-plus"></i>
             </button>
         
             <div class="ml-4 text-sm text-gray-500">
                 <?php if (isset($product['stock'])): ?>
+                <?php if ($product['stock'] <= 0): ?>
+    <button disabled class="btn btn-secondary text-red-600">Out of Stock</button>
+<?php endif; ?>
                     <?php if ($product['stock'] > 0): ?>
                         <span class="text-green-600"><?php echo $product['stock']; ?> in stock</span>
-                    <?php else: ?>
-                        <span class="text-red-600">Out of stock</span>
+                    
                     <?php endif; ?>
                 <?php else: ?>
                     <span class="text-gray-500">Stock info not available</span>
@@ -300,9 +300,16 @@ document.addEventListener("DOMContentLoaded", function () {
     <input type="hidden" name="quantity" id="hidden-quantity" value="1">
 </form>
 
-<button id="place-order" class="flex-1 bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded-md transition">
-    <i class="fas fa-bolt mr-2"></i> Buy Now
-</button>
+<?php if ($product['stock'] > 0): ?>
+    <button id="place-order" class="flex-1 bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded-md transition">
+        <i class="fas fa-bolt mr-2"></i> Buy Now
+    </button>
+<?php else: ?>
+    <button disabled class="flex-1 bg-gray-400 text-white py-2 px-4 rounded-md cursor-not-allowed opacity-70">
+        Out of Stock
+    </button>
+<?php endif; ?>
+
                         </div>
                     </div>
                 </div>
@@ -333,7 +340,7 @@ document.addEventListener("DOMContentLoaded", function () {
                     <div class="space-y-3 mb-4">
                         <div class="flex justify-between text-gray-700">
                             <span>Subtotal</span>
-                            <span id="order-subtotal">$<?php echo number_format($product['price'], 2); ?></span>
+                            <span id="order-subtotal"><?php echo number_format($product['price'], 2); ?></span>
                             <script>
                                 const productPrice = <?php echo floatval($product['price']); ?>;
                             </script>
@@ -363,13 +370,21 @@ $total = $product['price'] * $quantity;
                     </div>
                     
         <!-- Form with Hidden Input -->
-<form action="Payment/payment.php" method="POST" id="order-form">
+<?php if ($product['stock'] > 0): ?>
+    <form action="Payment/payment.php" method="POST" id="order-form">
     <input type="hidden" name="product_id" value="<?php echo $product['product_id']; ?>">
     <input type="hidden" name="quantity" id="hidden-quantity" value="1">
     <button type="submit" id="place-order" class="w-full bg-green-600 hover:bg-green-700 text-white py-3 rounded-md font-semibold transition">
         Place Order
     </button>
 </form>
+
+<?php else: ?>
+    <button disabled class="w-full bg-gray-400 text-white py-3 rounded-md font-semibold opacity-70 cursor-not-allowed">
+        Out of Stock
+    </button>
+<?php endif; ?>
+
 <script>
 const visibleInput = document.getElementById('quantity');
 const hiddenInput = document.getElementById('hidden-quantity');
@@ -543,50 +558,21 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         }
         
-        // Place order
-        placeOrderBtn.addEventListener('click', function() {
-            if (cart.length === 0) {
-                alert('Your cart is empty. Please add items to proceed.');
-                return;
-            }
-            
-            const total = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-            
-            const orderForm = document.createElement('form');
-            orderForm.method = 'post';
-            orderForm.action = 'submitorder.php';
-            orderForm.style.display = 'none';
-            
-            // Add product_id (in a real app, this would come from your product data)
-            const productIdInput = document.createElement('input');
-            productIdInput.type = 'hidden';
-            productIdInput.name = 'product_id';
-            productIdInput.value = '12345';
-            orderForm.appendChild(productIdInput);
-            
-            // Add product_name
-            const productNameInput = document.createElement('input');
-            productNameInput.type = 'hidden';
-            productNameInput.name = 'product_name';
-            productNameInput.value = 'Premium Wireless Headphones';
-            orderForm.appendChild(productNameInput);
-            
-            // Add amount (total quantity)
-            const quantityInput = document.createElement('input');
-            quantityInput.type = 'hidden';
-            quantityInput.name = 'amount';
-            quantityInput.value = cart.reduce((sum, item) => sum + item.quantity, 0);
-            orderForm.appendChild(quantityInput);
-            
-            document.body.appendChild(orderForm);
-            orderForm.submit();
-        });
-        
-        // Initialize checkout button
-        checkoutBtn.addEventListener('click', placeOrderBtn.click.bind(placeOrderBtn));
-        
-        // Initialize order summary
-        updateOrderSummary();
+    
+
+        function updateQuantity(change) {
+    const maxStock = <?php echo intval($product['stock']); ?>; // max stock from PHP
+    let current = parseInt(quantityInput.value);
+    let newValue = current + change;
+
+    if (newValue < 1) newValue = 1;
+    if (newValue > maxStock) newValue = maxStock; // prevent exceeding stock
+
+    quantityInput.value = newValue;
+    hiddenInput.value = newValue; // sync with form
+    updateOrderSummary();
+}
+
     </script>
 </body>
 </html>

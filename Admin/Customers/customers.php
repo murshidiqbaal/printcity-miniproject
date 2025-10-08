@@ -159,9 +159,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_user_id'])) {
     }
     .delete-button:hover { background-color: #b91c1c; }
   </style>
+  
 </head>
 <body>
-
+<a href="../HomeScreen/indexAdmin.php" 
+     style="position: absolute; top: 15px; left: 15px; font-size: 1.5rem; color: black; text-decoration: none;">
+    <i class="fas fa-arrow-left"></i>
+  </a>
 <h2>👥 Registered Customers</h2>
 
 <form method="GET" class="filter-form" action="">
