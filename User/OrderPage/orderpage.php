@@ -22,38 +22,41 @@ $user = mysqli_fetch_assoc($user_result);
 // Validate profile details
 $valid_profile = !empty($user['full_name']) && !empty($user['email']) && !empty($user['phone']) && !empty($user['address']);
 
-// Fetch selected product
-// Fetch selected product
+// Determine product type
+$product = null;
+$quantity = isset($_POST['quantity']) ? intval($_POST['quantity']) : 1;
+
+$product_id = null;
+
+// Check for normal product
 if (isset($_GET['product_id'])) {
     $product_id = intval($_GET['product_id']);
     $sql = "SELECT * FROM products WHERE product_id = $product_id";
     $result = mysqli_query($conn, $sql);
     $product = mysqli_fetch_assoc($result);
+}
+// Check for offer product
+elseif (isset($_GET['offer_product_id'])) {
+    $product_id = intval($_GET['offer_product_id']);
+    $sql = "SELECT * FROM offer_products WHERE offer_product_id = $product_id";
+    $result = mysqli_query($conn, $sql);
+    $product = mysqli_fetch_assoc($result);
+}
 
-    if (!$product) {
-        echo "<p>Product not found!</p>";
-        exit;
-    }
-
-    // ✅ Get requested quantity from POST or default to 1
-    $quantity = isset($_POST['quantity']) ? intval($_POST['quantity']) : 1;
-
-   
-} else {
+// If neither exists or product not found
+if (!$product) {
     echo "<p>No product selected!</p>";
     exit;
 }
 
 
-
-// If profile is incomplete, redirect
+// Redirect if profile incomplete
 if (!$valid_profile) {
-    header("Location: ../myprofile/myprofile.php?redirect=orderpage.php&product_id=" . $product_id);
+    header("Location: ../myprofile/myprofile.php?redirect=orderpage.php&product_id=" . $product_id . (isset($_GET['type']) ? "&type=".$_GET['type'] : ""));
     exit();
 }
-// Only for standard product orders (not custom prints)
-
 ?>
+
 
 
 
@@ -284,7 +287,8 @@ document.addEventListener("DOMContentLoaded", function () {
     <!-- Action Buttons -->
     <div class="flex gap-3">
         <button id="add-to-favourite"
-            data-product-id="<?php echo $product['product_id']; ?>"
+            data-product-id="<?= htmlspecialchars($product_id) ?>
+"
             class="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-md transition favourite-btn">
             <i class="fas fa-heart mr-2"></i> Favourite
         </button>
@@ -296,7 +300,8 @@ document.addEventListener("DOMContentLoaded", function () {
 <script src="../favourite/favourite.js"></script>
 
                             <form action="Payment/payment.php" method="POST" id="order-form">
-    <input type="hidden" name="product_id" value="<?php echo $product['product_id']; ?>">
+    <input type="hidden" name="product_id" value="<?= htmlspecialchars($product_id) ?>
+">
     <input type="hidden" name="quantity" id="hidden-quantity" value="1">
 </form>
 
@@ -371,36 +376,52 @@ $total = $product['price'] * $quantity;
                     
         <!-- Form with Hidden Input -->
 <?php if ($product['stock'] > 0): ?>
-    <form action="Payment/payment.php" method="POST" id="order-form">
-    <input type="hidden" name="product_id" value="<?php echo $product['product_id']; ?>">
-    <input type="hidden" name="quantity" id="hidden-quantity" value="1">
-    <button type="submit" id="place-order" class="w-full bg-green-600 hover:bg-green-700 text-white py-3 rounded-md font-semibold transition">
-        Place Order
-    </button>
-</form>
+    <form action="Payment/payment.php" method="POST" id="summary-order-form">
+        <?php if (!empty($product['product_id'])): ?>
+            <!-- Normal Product -->
+            <input type="hidden" name="product_id" value="<?= htmlspecialchars($product['product_id']) ?>">
+        <?php elseif (!empty($product['offer_product_id'])): ?>
+            <!-- Offer Product -->
+            <input type="hidden" name="offer_product_id" value="<?= htmlspecialchars($product['offer_product_id']) ?>">
+        <?php endif; ?>
 
+        <!-- Quantity -->
+        <input type="hidden" name="quantity" id="summary-hidden-quantity" value="1">
+
+        <!-- Submit Button -->
+        <button type="button" id="summary-place-order"
+            class="w-full bg-green-600 hover:bg-green-700 text-white py-3 rounded-md font-semibold transition">
+            Place Order
+        </button>
+    </form>
 <?php else: ?>
     <button disabled class="w-full bg-gray-400 text-white py-3 rounded-md font-semibold opacity-70 cursor-not-allowed">
         Out of Stock
     </button>
 <?php endif; ?>
 
+
 <script>
 const visibleInput = document.getElementById('quantity');
-const hiddenInput = document.getElementById('hidden-quantity');
+const summaryHiddenInput = document.getElementById('summary-hidden-quantity');
+const summaryOrderForm = document.getElementById('summary-order-form');
+const summaryPlaceOrderBtn = document.getElementById('summary-place-order');
 
-function changeQuantity(amount) {
-    let current = parseInt(visibleInput.value);
-    let newValue = current + amount;
-    if (newValue < 1) newValue = 1;
+// Sync quantity input with hidden input
+visibleInput.addEventListener('input', function() {
+    summaryHiddenInput.value = visibleInput.value;
+});
 
-    // Update visible input
-    visibleInput.value = newValue;
-
-    // Sync hidden input
-    hiddenInput.value = newValue;
+// Place Order button acts like Buy Now
+if (summaryPlaceOrderBtn) {
+    summaryPlaceOrderBtn.addEventListener('click', function() {
+        // Sync quantity before submit
+        summaryHiddenInput.value = visibleInput.value;
+        summaryOrderForm.submit();
+    });
 }
 
+    
 // Optional: sync hidden input right before form submit (extra safety)
 document.getElementById('order-form').addEventListener('submit', function() {
     hiddenInput.value = visibleInput.value;

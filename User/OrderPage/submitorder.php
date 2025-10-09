@@ -27,9 +27,9 @@ if (!$user) {
     die("User not found.");
 }
 
-// Check if this is a normal product order or custom order
-if (isset($_POST['product_id'])) {
-    // === NORMAL PRODUCT ORDER ===
+// ✅ NORMAL PRODUCT ORDER
+if (isset($_POST['product_id']) && !empty($_POST['product_id'])) {
+
     $product_id = intval($_POST['product_id']);
     $quantity   = isset($_POST['quantity']) ? intval($_POST['quantity']) : 1;
 
@@ -37,8 +37,8 @@ if (isset($_POST['product_id'])) {
         die("Invalid product or quantity.");
     }
 
-    // Fetch product price
-    $stmt = $conn->prepare("SELECT price FROM products WHERE product_id = ?");
+    // Fetch product price and stock together
+    $stmt = $conn->prepare("SELECT price, stock FROM products WHERE product_id = ?");
     $stmt->bind_param("i", $product_id);
     $stmt->execute();
     $product_result = $stmt->get_result();
@@ -49,52 +49,40 @@ if (isset($_POST['product_id'])) {
         die("Product not found.");
     }
 
-// Fetch current stock
-$stmt = $conn->prepare("SELECT stock FROM products WHERE product_id = ?");
-$stmt->bind_param("i", $product_id);
-$stmt->execute();
-$stock_result = $stmt->get_result();
-$stock_row = $stock_result->fetch_assoc();
-$stmt->close();
+    // ✅ Check stock
+    $new_stock = $product['stock'] - $quantity;
+    if ($new_stock < 0) {
+        die("Not enough stock available.");
+    }
 
-if (!$stock_row) {
-    die("Product stock not found.");
-}
+    // ✅ Update stock
+    $stmt = $conn->prepare("UPDATE products SET stock = ? WHERE product_id = ?");
+    $stmt->bind_param("ii", $new_stock, $product_id);
+    $stmt->execute();
+    $stmt->close();
 
-$new_stock = $stock_row['stock'] - $quantity;
-if ($new_stock < 0) {
-    die("Not enough stock available.");
-}
-
-// Update stock in products table
-$stmt = $conn->prepare("UPDATE products SET stock = ? WHERE product_id = ?");
-$stmt->bind_param("ii", $new_stock, $product_id);
-$stmt->execute();
-$stmt->close();
-
-
-    $total_price = $product['price'] * $quantity;
+    // ✅ Insert order
+    $total_price   = $product['price'] * $quantity;
     $customer_name = $user['full_name'];
     $address       = $user['address'];
     $order_date    = date("Y-m-d H:i:s");
     $status        = "Pending";
     $product_type  = "products";
 
-    // Insert into orders table
     $stmt = $conn->prepare("
         INSERT INTO orders 
             (product_id, customer_name, address, quantity, order_date, status, user_id, total_price, product_type)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
     ");
-    $stmt->bind_param("ississids", 
-        $product_id, 
-        $customer_name, 
-        $address, 
-        $quantity, 
-        $order_date, 
-        $status, 
-        $user_id, 
-        $total_price, 
+    $stmt->bind_param("ississids",
+        $product_id,
+        $customer_name,
+        $address,
+        $quantity,
+        $order_date,
+        $status,
+        $user_id,
+        $total_price,
         $product_type
     );
 
@@ -104,9 +92,11 @@ $stmt->close();
     } else {
         die("Error placing order: " . $stmt->error);
     }
+}
 
-} elseif (isset($_POST['file_name'])) {
-    // === CUSTOM ORDER ===
+// ✅ CUSTOM ORDER
+elseif (isset($_POST['file_name']) && !empty($_POST['file_name'])) {
+
     $file_name      = $_POST['file_name'];
     $pages          = isset($_POST['pages']) ? intval($_POST['pages']) : 1;
     $quantity       = isset($_POST['quantity']) ? intval($_POST['quantity']) : 1;
@@ -117,22 +107,21 @@ $stmt->close();
     $payment_method = $_POST['payment_method'] ?? null;
     $created_at     = date("Y-m-d H:i:s");
 
-    // Insert into custom_orders table
     $stmt = $conn->prepare("
         INSERT INTO custom_orders 
             (user_id, file_name, pages, quantity, print_type, paper_size, notes, total_amount, payment_method, created_at)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     ");
-    $stmt->bind_param("isiiissdss", 
-        $user_id, 
-        $file_name, 
-        $pages, 
-        $quantity, 
-        $print_type, 
-        $paper_size, 
-        $notes, 
-        $total_amount, 
-        $payment_method, 
+    $stmt->bind_param("isiiissdss",
+        $user_id,
+        $file_name,
+        $pages,
+        $quantity,
+        $print_type,
+        $paper_size,
+        $notes,
+        $total_amount,
+        $payment_method,
         $created_at
     );
 
@@ -142,11 +131,12 @@ $stmt->close();
     } else {
         die("Error placing custom order: " . $stmt->error);
     }
-
-} else {
-    die("No order data provided.");
 }
 
-$stmt->close();
+else {
+    // ✅ If neither normal nor custom order
+    die("No product selected or order data provided.");
+}
+
 $conn->close();
 ?>

@@ -16,9 +16,7 @@ use setasign\Fpdi\Fpdi;
 
 // Function to count PDF pages
 function countPdfPages($filePath) {
-    if (!file_exists($filePath)) {
-        return 1; // fallback if file doesn't exist
-    }
+    if (!file_exists($filePath)) return 1;
     $pdf = new Fpdi();
     return $pdf->setSourceFile($filePath);
 }
@@ -34,6 +32,7 @@ $stmt->bind_param("i", $user_id);
 $stmt->execute();
 $result = $stmt->get_result();
 $user_data = $result->fetch_assoc() ?? [];
+$stmt->close();
 
 // Fallbacks for user info
 $user_name    = $user_data['full_name'] ?? 'Customer';
@@ -55,72 +54,70 @@ if ($order_type === 'custom') {
     $notes      = $_GET['notes'] ?? '';
     $pages      = intval($_GET['pages'] ?? 1);
 
-    
-    $uploads_dir = __DIR__ . '/uploads'; // Make sure this folder exists
-    if (!is_dir($uploads_dir)) {
-        mkdir($uploads_dir, 0777, true); // create uploads folder if not exists
-    }
-$filePath = $file_name ? $uploads_dir . '/' . basename($file_name) : null;
+    $uploads_dir = __DIR__ . '/uploads';
+    if (!is_dir($uploads_dir)) mkdir($uploads_dir, 0777, true);
 
- // Determine quantity
+    $filePath = $file_name ? $uploads_dir . '/' . basename($file_name) : null;
+
     if ($filePath && file_exists($filePath) && preg_match('/\.pdf$/i', $file_name)) {
         $quantity = countPdfPages($filePath);
     } elseif ($filePath && preg_match('/\.(jpg|jpeg|png|gif)$/i', $file_name)) {
-        // treat an image as 1 page
         $quantity = 1;
     } else {
-        // fallback if no file uploaded
         $quantity = intval($_GET['quantity'] ?? 1);
-        $file_name = null; // reset since no file exists
+        $file_name = null;
         $filePath = null;
     }
 
     $unit_price = (strtolower($print_type) === 'color') ? 10 : 1;
     $subtotal = ($unit_price * $pages) * $quantity;
     $tax_rate = 0.00;
-    $tax = $subtotal ;
+    $tax = $subtotal * $tax_rate;
     $shipping = 0;
-    $total_amount = $subtotal  + $shipping;
+    $total_amount = $subtotal + $shipping;
 
     $product = [
         'product_id'  => 0,
         'name'        => "Custom Print ({$paper_size} - " . ucfirst($print_type) . ")",
         'description' => $notes ?: 'Custom print job',
         'price'       => $unit_price,
-        'image_path'  => $file_name // can show thumbnail if image exists
+        'image_path'  => $file_name
     ];
+
 } else {
-    // Normal product order path
-    $product_id = $_POST['product_id'] ?? $_GET['product_id'] ?? null;
-    $quantity   = intval($_POST['quantity'] ?? $_GET['quantity'] ?? 1);
+    // Determine if it's a normal product or an offer product
+    $product_id        = $_POST['product_id'] ?? $_GET['product_id'] ?? null;
+    $offer_product_id  = $_POST['offer_product_id'] ?? $_GET['offer_product_id'] ?? null;
+    $quantity          = intval($_POST['quantity'] ?? $_GET['quantity'] ?? 1);
 
-    if (!$product_id) {
-        die("Product not selected.");
-    }
 
-    $sql = "SELECT * FROM products WHERE product_id = ?";
-    $stmt = $conn->prepare($sql);
+if ($product_id) {
+    $stmt = $conn->prepare("SELECT * FROM products WHERE product_id = ?");
     $stmt->bind_param("i", $product_id);
-    $stmt->execute();
-    $product = $stmt->get_result()->fetch_assoc();
-    $stmt->close();
+} elseif ($offer_product_id) {
+    $stmt = $conn->prepare("SELECT * FROM offer_products WHERE offer_product_id = ?");
+    $stmt->bind_param("i", $offer_product_id);
+} else {
+    die("No product selected.");
+}
 
-    if (!$product) {
-        die("Product not found.");
-    }
+$stmt->execute();
+$product = $stmt->get_result()->fetch_assoc();
+$stmt->close();
 
-    $subtotal = $product['price'] * $quantity;
-    $tax_rate = 0.08;
-    $tax = $subtotal * $tax_rate;
-    $shipping = 0;
-    $total_amount = $subtotal  + $shipping;
+    if (!$product) die("Product not found.");
+
+    $subtotal    = $product['price'] * $quantity;
+    $tax_rate    = 0.08;
+    $tax         = $subtotal * $tax_rate;
+    $shipping    = 0;
+    $total_amount = $subtotal + $shipping;
 }
 
 // Generate invoice number
 $invoice_number = 'INV-' . date('Ymd') . '-' . $user_id;
-$invoice_date = date('F j, Y');
+$invoice_date   = date('F j, Y');
 ?>
-
 
 <!DOCTYPE html>
 <html lang="en">
@@ -560,20 +557,25 @@ $invoice_date = date('F j, Y');
                 <form id="orderForm" action="../submitorder.php" method="POST" class="payment-form">
 
 
-  <?php if ($order_type === 'custom'): ?>
+<?php if ($order_type === 'custom'): ?>
     <input type="hidden" name="order_type" value="custom">
     <input type="hidden" name="quantity" value="<?= $quantity ?>">
     <input type="hidden" name="print_type" value="<?= htmlspecialchars($print_type ?? '') ?>">
     <input type="hidden" name="paper_size" value="<?= htmlspecialchars($paper_size ?? '') ?>">
     <input type="hidden" name="notes" value="<?= htmlspecialchars($notes ?? '') ?>">
     <input type="hidden" name="file_name" value="<?= htmlspecialchars($file_name ?? '') ?>">
-<?php else: ?> 
-
-                    <input type="hidden" name="product_id" value="<?= $product['product_id'] ?>">
-                    <input type="hidden" name="quantity" value="<?= $quantity ?>">
-                    <input type="hidden" name="total_amount" value="<?= $total_amount ?>">
-                    <input type="hidden" name="invoice_number" value="<?= $invoice_number ?>">
+<?php else: ?>
+    <?php if (!empty($product['product_id'])): ?>
+        <input type="hidden" name="product_id" value="<?= $product['product_id'] ?>">
+    <?php endif; ?>
+    <?php if (!empty($product['offer_product_id'])): ?>
+        <input type="hidden" name="offer_product_id" value="<?= $product['offer_product_id'] ?>">
+    <?php endif; ?>
+    <input type="hidden" name="quantity" value="<?= $quantity ?>">
+    <input type="hidden" name="total_amount" value="<?= $total_amount ?>">
+    <input type="hidden" name="invoice_number" value="<?= $invoice_number ?>">
 <?php endif; ?>
+
                     <label for="payment_method">Choose your preferred payment method:</label>
                     <select name="payment_method" id="payment_method" required>
                         <option value="" disabled selected>Select a payment method</option>

@@ -1,14 +1,17 @@
 <?php
-// Database connection
 $conn = mysqli_connect("localhost", "root", "", "printcity");
 if (!$conn) {
     die("Connection failed: " . mysqli_connect_error());
 }
 
-// Fetch all products
-$sql = "SELECT * FROM products LIMIT 6";
+// Fetch one random offer product
+$sql = "SELECT * FROM offer_products ORDER BY RAND() LIMIT 1";
 $result = mysqli_query($conn, $sql);
+$offer = mysqli_fetch_assoc($result);
 ?>
+
+
+
 
 <!DOCTYPE html>
 <html lang="en">
@@ -481,6 +484,461 @@ $result = mysqli_query($conn, $sql);
       .away {
         transform-origin: bottom left;
       }
+/* Enhanced Awesome Offer Popup Styles */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@300;400;500;600;700&display=swap');
+
+:root {
+    --bg-primary: #ffffff;
+    --bg-secondary: #f8fafc;
+    --text-primary: #0f172a;
+    --text-secondary: #64748b;
+    --accent-primary: #3b82f6;
+    --accent-success: #10b981;
+    --accent-danger: #ef4444;
+    --accent-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    --discount-gradient: linear-gradient(135deg, #ff6b6b 0%, #ee5a52 100%);
+    --shadow-light: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    --shadow-medium: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    --shadow-elevated: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    --border-radius: 20px;
+    --transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+#offer-products {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    pointer-events: none; /* Disabled until popup appears */
+    z-index: 1000;
+}
+
+.offer-popup {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(8px);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    opacity: 0;
+    transform: scale(0.8) rotate(-5deg);
+    transition: var(--transition);
+    pointer-events: auto;
+    z-index: 9999;
+}
+
+.offer-popup.show {
+    opacity: 1;
+    transform: scale(1) rotate(0deg);
+}
+
+/* Awesome Card Design */
+.offer-card {
+    width: 90%;
+    max-width: 380px;
+    border-radius: var(--border-radius);
+    overflow: hidden;
+    background: var(--bg-primary);
+    text-align: center;
+    position: relative;
+    box-shadow: var(--shadow-elevated);
+    transform: perspective(1000px) rotateY(0deg);
+    transition: var(--transition);
+    font-family: 'Inter', sans-serif;
+    animation: cardFloat 3s ease-in-out infinite;
+}
+
+.offer-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: var(--accent-gradient);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    z-index: -1;
+}
+
+.offer-popup.show .offer-card {
+    transform: perspective(1000px) rotateY(0deg) scale(1);
+}
+
+.offer-card:hover::before {
+    opacity: 0.05;
+}
+
+@keyframes cardFloat {
+    0%, 100% { transform: translateY(0px) rotate(0deg); }
+    50% { transform: translateY(-10px) rotate(1deg); }
+}
+
+/* Discount Badge - Fire-like Animation */
+.discount-badge {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    z-index: 10;
+    background: var(--discount-gradient);
+    padding: 8px 16px;
+    border-radius: 50px;
+    box-shadow: 0 4px 15px rgba(255, 107, 107, 0.4);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    animation: pulseGlow 2s ease-in-out infinite;
+    transform: rotate(-5deg);
+}
+
+.discount-badge i {
+    font-size: 14px;
+    animation: fireFlicker 1.5s ease-in-out infinite;
+}
+
+.discount-text {
+    color: white;
+    font-weight: 700;
+    font-size: 14px;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+@keyframes pulseGlow {
+    0%, 100% { box-shadow: 0 4px 15px rgba(255, 107, 107, 0.4); }
+    50% { box-shadow: 0 4px 25px rgba(255, 107, 107, 0.6); }
+}
+
+@keyframes fireFlicker {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.8; transform: scale(1.1); }
+}
+
+/* Image Container with Enhanced Effects */
+.image-container {
+    position: relative;
+    height: 280px;
+    overflow: hidden;
+}
+
+.product-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: var(--transition);
+    filter: brightness(1.1) contrast(1.05);
+}
+
+.offer-card:hover .product-image {
+    filter: brightness(1.2) contrast(1.1);
+    transform: scale(1.05);
+}
+
+/* Overlay with Quick Actions */
+.image-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to bottom, rgba(0,0,0,0.3), rgba(0,0,0,0.7));
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.offer-card:hover .image-overlay {
+    opacity: 1;
+}
+
+.quick-actions {
+    display: flex;
+    gap: 12px;
+    opacity: 0;
+    transform: translateY(20px);
+    transition: all 0.3s ease 0.2s;
+}
+
+.offer-card:hover .quick-actions {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.action-btn {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.95);
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    color: var(--text-primary);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    transition: var(--transition);
+    cursor: pointer;
+}
+
+.action-btn:hover {
+    background: white;
+    transform: scale(1.1) translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+}
+
+.action-btn.wishlist i { color: #ef4444; }
+.action-btn.cart i { color: var(--accent-success); }
+
+/* Card Content */
+.card-content {
+    padding: 24px;
+    position: relative;
+    z-index: 2;
+}
+
+.offer-name {
+    font-family: 'Poppins', sans-serif;
+    font-size: 24px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 16px;
+    line-height: 1.3;
+    opacity: 0;
+    transform: translateY(20px);
+    transition: all 0.5s ease 0.3s;
+}
+
+.offer-popup.show .offer-name {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* Pricing Section - Modern Design */
+.pricing-section {
+    margin: 20px 0;
+    padding: 16px;
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.05) 0%, rgba(139, 92, 246, 0.05) 100%);
+    border-radius: 12px;
+    border: 1px solid rgba(59, 130, 246, 0.1);
+}
+
+.prices {
+    display: flex;
+    align-items: baseline;
+    justify-content: center;
+    gap: 12px;
+    margin-bottom: 8px;
+}
+
+.discounted-price {
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--accent-success);
+    text-shadow: 0 1px 2px rgba(16, 185, 129, 0.2);
+}
+
+.original-price {
+    font-size: 18px;
+    color: var(--text-secondary);
+    text-decoration: line-through;
+    opacity: 0.8;
+}
+
+.savings {
+    text-align: center;
+}
+
+.save-text {
+    background: var(--discount-gradient);
+    color: white;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 14px;
+    font-weight: 600;
+    box-shadow: 0 2px 8px rgba(255, 107, 107, 0.3);
+    animation: bounceIn 0.6s ease;
+}
+
+@keyframes bounceIn {
+    0% { transform: scale(0.3); opacity: 0; }
+    50% { transform: scale(1.05); }
+    70% { transform: scale(0.9); }
+    100% { transform: scale(1); opacity: 1; }
+}
+
+/* CTA Button - Gradient with Glow */
+.cta-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+    background: var(--accent-gradient);
+    color: white;
+    padding: 16px 24px;
+    border-radius: 12px;
+    font-size: 16px;
+    font-weight: 600;
+    text-decoration: none;
+    margin: 16px 0;
+    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+    position: relative;
+    overflow: hidden;
+    transition: var(--transition);
+    opacity: 0;
+    transform: translateY(20px);
+}
+
+.cta-button::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+    transition: left 0.6s ease;
+}
+
+.cta-button:hover::before {
+    left: 100%;
+}
+
+.cta-button:hover {
+    transform: translateY(-3px) scale(1.02);
+    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.5);
+}
+
+.offer-popup.show .cta-button {
+    opacity: 1;
+    transform: translateY(0);
+    transition-delay: 0.4s;
+}
+
+.cta-button i {
+    transition: transform 0.3s ease;
+}
+
+.cta-button:hover i {
+    transform: scale(1.2);
+}
+
+/* Rating Section */
+.rating-section {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 12px;
+    opacity: 0;
+    transform: translateY(10px);
+    transition: all 0.5s ease 0.5s;
+}
+
+.offer-popup.show .rating-section {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.stars {
+    color: #fbbf24;
+    font-size: 14px;
+}
+
+.rating-text {
+    font-size: 14px;
+    color: var(--text-secondary);
+    font-weight: 500;
+}
+
+/* Close Button - Enhanced Design */
+.offer-close {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    background: rgba(255, 75, 92, 0.9);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    font-size: 18px;
+    width: 40px;
+    height: 40px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 12px rgba(255, 75, 92, 0.3);
+    transition: var(--transition);
+    z-index: 20;
+}
+
+.offer-close:hover {
+    background: #ff4b5c;
+    transform: rotate(90deg) scale(1.1);
+    box-shadow: 0 6px 16px rgba(255, 75, 92, 0.4);
+}
+
+.offer-close i {
+    transition: transform 0.3s ease;
+}
+
+.offer-close:hover i {
+    transform: rotate(180deg);
+}
+
+/* Responsive Design */
+@media (max-width: 480px) {
+    .offer-card {
+        width: 95%;
+        max-width: 320px;
+        border-radius: 16px;
+    }
+    
+    .image-container {
+        height: 240px;
+    }
+    
+    .offer-name {
+        font-size: 20px;
+    }
+    
+    .discounted-price {
+        font-size: 24px;
+    }
+    
+    .cta-button {
+        padding: 14px 20px;
+        font-size: 15px;
+    }
+    
+    .discount-badge {
+        top: 12px;
+        left: 12px;
+        padding: 6px 12px;
+    }
+}
+
+/* Accessibility Improvements */
+@media (prefers-reduced-motion: reduce) {
+    * {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}
+
+/* Initial Hide for Content */
+.offer-popup:not(.show) .offer-card * {
+    opacity: 0;
+}
+
+      
   </style>
 </head>
 <body>
@@ -495,7 +953,6 @@ $result = mysqli_query($conn, $sql);
                 <li><a href="../customization/custom_orders.php">Print</a></li>
                 <li><a href="#footer-content">About</a></li>
                 <li><a href="#products" class="nav-cta">Order Now</a></li>
-                
             </ul>
         </nav>
     </div>
@@ -541,7 +998,6 @@ $result = mysqli_query($conn, $sql);
   </section>
 
   <!-- Stack Area -->
-
  <div class="stack-area">
       <div class="left">
         <div class="title">Print City</div>
@@ -574,13 +1030,10 @@ $result = mysqli_query($conn, $sql);
         </div>
       </div>
     </div>
- 
 
  <div style="background-color: #0f0f23;">
 <?php include("../ProductPage/productpage.php"); ?>
 </div>
-
-
 
   <!-- Footer -->
     <footer>
@@ -615,15 +1068,17 @@ $result = mysqli_query($conn, $sql);
             </div>
             
             <div class="footer-col">
-                <h3>Contact Us</h3>
-                <p><i class="fas fa-map-marker-alt"></i> 123 Print Street, City, Country</p>
-                <p><i class="fas fa-phone"></i> +1 234 567 8900</p>
-                <p><i class="fas fa-envelope"></i> info@printcity.com</p>
+                <h3>Contact
+                </h3>
+                <p>PrintCity Thodupuzha</p>
+                <p>Email: printcitytdpa@gmail.com</p>
+                <p>Phone: 7994051281</p>
+
             </div>
         </div>
         
         <div class="copyright">
-            <p>© 2023 PrintCity. All rights reserved.</p>
+            <p>© 2025 PrintCity. All rights reserved.</p>
         </div>
     </footer>
 
