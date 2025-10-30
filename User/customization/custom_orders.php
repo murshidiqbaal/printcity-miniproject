@@ -6,6 +6,9 @@ if (!$conn) {
     die("Connection failed: " . mysqli_connect_error());
 }
 
+// Load Composer autoload for FPDI
+require_once dirname(__DIR__, 2) . '/vendor/autoload.php';
+
 // Check if user is logged in
 if (!isset($_SESSION['user_id'])) {
     header("Location: ../../Auth/login/login.html");
@@ -24,6 +27,20 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $paper_size = mysqli_real_escape_string($conn, $_POST['paper_size'] ?? 'A4');
     $notes = mysqli_real_escape_string($conn, $_POST['notes'] ?? '');
     
+    // Price lookup by paper size and print type
+    // A4 baseline: black_white = 1, color = 10
+    // A3 = 2x of A4, A5 = 0.5x of A4
+    $price_chart = [
+        'A4'     => ['black_white' => 1.0,  'color' => 10.0],
+        'A3'     => ['black_white' => 2.0,  'color' => 20.0],
+        'A5'     => ['black_white' => 0.5,  'color' => 5.0],
+        'A2'     => ['black_white' => 4.0,  'color' => 40.0], // optional
+        'A1'     => ['black_white' => 8.0,  'color' => 80.0], // optional
+        'Letter' => ['black_white' => 1.0,  'color' => 10.0],
+        'Legal'  => ['black_white' => 1.0,  'color' => 10.0],
+    ];
+    $unit_price = $price_chart[$paper_size][$print_type] ?? 1;
+
     // Handle file upload
     $uploaded_file = '';
     if (isset($_FILES['file_upload']) && $_FILES['file_upload']['error'] === UPLOAD_ERR_OK) {
@@ -47,6 +64,20 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             
             if (move_uploaded_file($_FILES["file_upload"]["tmp_name"], $target_file)) {
                 $uploaded_file = $target_file;
+
+                // Auto-detect page count for PDFs and override $pages
+                if ($file_extension === 'pdf') {
+                    $fullPath = __DIR__ . '/' . $uploaded_file;
+                    try {
+                        $fpdi = new \setasign\Fpdi\Fpdi();
+                        $pageCount = $fpdi->setSourceFile($fullPath);
+                        if (is_int($pageCount) && $pageCount > 0) {
+                            $pages = $pageCount;
+                        }
+                    } catch (\Throwable $e) {
+                        // Fallback: keep user-provided pages if detection fails
+                    }
+                }
             } else {
                 $error_message = "Error uploading file.";
             }
@@ -64,7 +95,9 @@ $params = http_build_query([
     'paper_size' => $paper_size,
     'notes'      => $notes,
     'file_name'  => $uploaded_file,
-    'file_type'  => $file_extension
+    'file_type'  => $file_extension,
+    'quantity'   => $quantity,
+    'unit_price' => $unit_price
 ]);
 
 
@@ -332,10 +365,10 @@ $conn->close();
                     <div id="file-info" class="file-info" style="display: none;"></div>
                 </div>
             </div>
-            <div class="form-group">
+            <!-- <div class="form-group">
                 <label class="form-label">Pages *</label>
-                <input type="number" class="form-control" name="pages" min="1" max="100" value="1" required>
-            </div>
+                <input type="number" id="pages" class="form-control" name="pages" min="1" max="1000" value="1" required>
+            </div> -->
 
             <div class="form-group">
                 <label class="form-label">Quantity (Number of Copies) *</label>
@@ -387,14 +420,19 @@ $conn->close();
         </div>
     </div>
 
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
     <script>
+        if (window['pdfjsLib']) {
+            pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+        }
+
         function showFileInfo(input) {
             const fileInfo = document.getElementById('file-info');
             if (input.files && input.files[0]) {
                 const file = input.files[0];
                 fileInfo.innerHTML = `
                     <strong>Selected:</strong> ${file.name} (${(file.size / 1024 / 1024).toFixed(2)} MB)<br>
-                    <small>Type: ${file.type}</small>
+                    <small>Type: ${file.type || file.name.split('.').pop().toLowerCase()}</small>
                 `;
                 fileInfo.style.display = 'block';
             } else {

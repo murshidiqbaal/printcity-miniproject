@@ -24,32 +24,41 @@
             gap: 20px;
         }
         .order-card {
-            background: #fff;
-            border-radius: 8px;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            background: rgba(255, 255, 255, 0.92);
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
             overflow: hidden;
-            transition: transform 0.2s;
+            transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+            border: 1px solid rgba(0, 0, 0, 0.06);
+            backdrop-filter: blur(8px);
         }
         .order-card:hover {
-            transform: translateY(-5px);
+            transform: translateY(-6px);
+            box-shadow: 0 18px 50px rgba(0, 0, 0, 0.14);
+            border-color: rgba(0, 0, 0, 0.12);
         }
         .order-image {
             width: 100%;
             height: 200px;
             object-fit: cover;
+            display: block;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.06);
         }
         .order-details {
-            padding: 15px;
+            padding: 18px;
         }
         .product-name {
-            font-size: 1.2em;
-            color: #333;
-            margin: 0;
+            font-size: 1.1em;
+            color: #111827;
+            margin: 0 0 6px 0;
+            font-weight: 700;
         }
         .order-meta {
-            font-size: 0.9em;
-            color: #666;
-            margin: 5px 0;
+            font-size: 0.92em;
+            color: #6b7280;
+            margin: 6px 0;
+            display: flex;
+            justify-content: space-between;
         }
         .status-badge {
             display: inline-block;
@@ -66,16 +75,20 @@
         .status-delivered { background-color: #28a745; }
         .track-btn {
             display: inline-block;
-            margin-top: 10px;
-            padding: 10px 15px;
-            background-color: #007bff;
+            margin-top: 12px;
+            padding: 10px 16px;
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
             color: white;
             text-decoration: none;
-            border-radius: 5px;
-            transition: background-color 0.3s;
+            border-radius: 10px;
+            transition: transform 0.25s ease, box-shadow 0.25s ease, background 0.25s ease;
+            box-shadow: 0 8px 22px rgba(99, 102, 241, 0.28);
+            font-weight: 600;
         }
         .track-btn:hover {
-            background-color: #0056b3;
+            transform: translateY(-2px);
+            box-shadow: 0 12px 28px rgba(99, 102, 241, 0.35);
+            background: linear-gradient(135deg, #7c3aed, #6d28d9);
         }
         .empty-state {
             text-align: center;

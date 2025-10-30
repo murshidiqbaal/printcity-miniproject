@@ -53,6 +53,8 @@ if ($order_type === 'custom') {
     $paper_size = $_GET['paper_size'] ?? 'A4';
     $notes      = $_GET['notes'] ?? '';
     $pages      = intval($_GET['pages'] ?? 1);
+    $quantity   = intval($_GET['quantity'] ?? 1);
+    $unit_price = isset($_GET['unit_price']) ? floatval($_GET['unit_price']) : 1;
 
     $uploads_dir = __DIR__ . '/uploads';
     if (!is_dir($uploads_dir)) mkdir($uploads_dir, 0777, true);
@@ -60,16 +62,13 @@ if ($order_type === 'custom') {
     $filePath = $file_name ? $uploads_dir . '/' . basename($file_name) : null;
 
     if ($filePath && file_exists($filePath) && preg_match('/\.pdf$/i', $file_name)) {
-        $quantity = countPdfPages($filePath);
+        // Don't override $quantity. Always use submitted quantity, and $pages is detected.
+        // Do nothing; fields are already set
     } elseif ($filePath && preg_match('/\.(jpg|jpeg|png|gif)$/i', $file_name)) {
-        $quantity = 1;
-    } else {
-        $quantity = intval($_GET['quantity'] ?? 1);
-        $file_name = null;
-        $filePath = null;
+        // For images, pretend pages = 1
+        $pages = 1;
     }
-
-    $unit_price = (strtolower($print_type) === 'color') ? 10 : 1;
+    // Pricing logic
     $subtotal = ($unit_price * $pages) * $quantity;
     $tax_rate = 0.00;
     $tax = $subtotal * $tax_rate;
@@ -476,8 +475,9 @@ $invoice_date   = date('F j, Y');
                         <tr>
                             <th>Item</th>
                             <th>Description</th>
-                            <th>Quantity</th>
+                            <th>Pages</th>
                             <th>Unit Price</th>
+                            <th>Quantity</th>
                             <th>Total</th>
                         </tr>
                     </thead>
@@ -499,6 +499,7 @@ $invoice_date   = date('F j, Y');
     </td>
     <td><?= $pages ?> pages</td>
     <td>₹<?= number_format($unit_price, 2) ?></td>
+    <td><?= $quantity ?></td>
     <td>₹<?= number_format($subtotal, 2) ?></td>
 </tr>
 <?php else: ?>
