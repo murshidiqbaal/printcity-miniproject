@@ -106,7 +106,15 @@ $stmt->close();
 
     if (!$product) die("Product not found.");
 
-    $subtotal    = $product['price'] * $quantity;
+    // Calculate price with discount
+    $price = $product['price'] ?? 0;
+    $discount = $product['discount'] ?? 0;
+    $final_price = $price;
+    if ($discount > 0) {
+        $final_price = $price - ($price * ($discount / 100));
+    }
+    
+    $subtotal    = $final_price * $quantity;
     $tax_rate    = 0.08;
     $tax         = $subtotal * $tax_rate;
     $shipping    = 0;
@@ -512,8 +520,9 @@ $invoice_date   = date('F j, Y');
         <strong><?= htmlspecialchars($product['name']) ?></strong><br>
         <small><?= htmlspecialchars($product['description'] ?? 'High-quality print product') ?></small>
     </td>
+    <td>N/A</td>
+    <td>₹<?= number_format($final_price, 2) ?></td>
     <td><?= $quantity ?></td>
-    <td>₹<?= number_format($product['price'], 2) ?></td>
     <td>₹<?= number_format($subtotal, 2) ?></td>
 </tr>
 <?php endif; ?>

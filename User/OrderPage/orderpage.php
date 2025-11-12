@@ -99,6 +99,15 @@ if (!$valid_profile) {
             from { opacity: 0; transform: translateY(-10px); }
             to { opacity: 1; transform: translateY(0); }
         }
+        /* Pulse animation for qty icons */
+        .iconPulse {
+            animation: qtyPulse 0.25s ease;
+        }
+        @keyframes qtyPulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.15); }
+            100% { transform: scale(1); }
+        }
     </style>
 </head>
 <body class="bg-gray-50">
@@ -255,33 +264,96 @@ document.addEventListener("DOMContentLoaded", function () {
     </div>
 
     <!-- Quantity Selector -->
-    <div class="mb-6">
-        <label class="block text-sm font-medium text-gray-700 mb-2">Quantity:</label>
-        <div class="flex items-center">
-            <button type="button" class="quantity-btn bg-gray-200 hover:bg-gray-300 text-gray-700 px-3 py-1 rounded-l-lg" onclick="updateQuantity(-1)">
-                <i class="fas fa-minus"></i>
-            </button>
-<input type="number" id="quantity" value="1" min="1" max="<?php echo $product['stock']; ?>" 
-       class="w-16 text-center border-t border-b border-gray-300 py-1">
-            <button type="button" class="quantity-btn bg-gray-200 hover:bg-gray-300 text-gray-700 px-3 py-1 rounded-r-lg" onclick="updateQuantity(1)">
-                <i class="fas fa-plus"></i>
-            </button>
-        
-            <div class="ml-4 text-sm text-gray-500">
-                <?php if (isset($product['stock'])): ?>
-                <?php if ($product['stock'] <= 0): ?>
-    <button disabled class="btn btn-secondary text-red-600">Out of Stock</button>
-<?php endif; ?>
-                    <?php if ($product['stock'] > 0): ?>
-                        <span class="text-green-600"><?php echo $product['stock']; ?> in stock</span>
-                    
-                    <?php endif; ?>
-                <?php else: ?>
-                    <span class="text-gray-500">Stock info not available</span>
-                <?php endif; ?>
-            </div>
-        </div>
+<div class="mb-6">
+  <label class="block text-sm font-medium text-gray-700 mb-2">Quantity:</label>
+  <div class="flex items-center">
+    <button type="button" id="qty-minus"
+      class="quantity-btn bg-gray-200 hover:bg-gray-300 text-gray-700 px-3 py-1 rounded-l-lg">
+      <i class="fas fa-minus"></i>
+    </button>
+
+    <input type="number" id="quantity" value="1" min="1" 
+           max="<?php echo $product['stock']; ?>"
+           class="w-16 text-center border-t border-b border-gray-300 py-1">
+
+    <button type="button" id="qty-plus"
+      class="quantity-btn bg-gray-200 hover:bg-gray-300 text-gray-700 px-3 py-1 rounded-r-lg">
+      <i class="fas fa-plus"></i>
+    </button>
+
+    <div class="ml-4 text-sm text-gray-500">
+      <?php if (isset($product['stock'])): ?>
+        <?php if ($product['stock'] <= 0): ?>
+          <button disabled class="btn btn-secondary text-red-600">Out of Stock</button>
+        <?php else: ?>
+          <span class="text-green-600"><?php echo $product['stock']; ?> in stock</span>
+        <?php endif; ?>
+      <?php else: ?>
+        <span class="text-gray-500">Stock info not available</span>
+      <?php endif; ?>
     </div>
+  </div>
+</div>
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  const qtyInput = document.getElementById("quantity");
+  const qtyMinus = document.getElementById("qty-minus");
+  const qtyPlus = document.getElementById("qty-plus");
+  const hiddenQuantityInput = document.getElementById("hidden-quantity");
+  const summaryHiddenInput = document.getElementById("summary-hidden-quantity");
+  const productPrice = <?php echo floatval($product['price']); ?>;
+  const maxStock = <?php echo intval($product['stock']); ?>;
+
+  // Helper: update hidden fields & totals
+  function syncQuantity() {
+    const quantity = parseInt(qtyInput.value) || 1;
+    if (hiddenQuantityInput) hiddenQuantityInput.value = quantity;
+    if (summaryHiddenInput) summaryHiddenInput.value = quantity;
+    updateOrderSummary();
+  }
+
+  // Quantity +/- buttons
+  qtyMinus.addEventListener("click", () => {
+    let value = parseInt(qtyInput.value) || 1;
+    value = Math.max(1, value - 1);
+    qtyInput.value = value;
+    pulse(qtyMinus);
+    syncQuantity();
+  });
+
+  qtyPlus.addEventListener("click", () => {
+    let value = parseInt(qtyInput.value) || 1;
+    if (maxStock > 0) value = Math.min(maxStock, value + 1);
+    else value = value + 1;
+    qtyInput.value = value;
+    pulse(qtyPlus);
+    syncQuantity();
+  });
+
+  // Typing manually also updates total
+  qtyInput.addEventListener("input", syncQuantity);
+
+  // Update totals on load
+  function updateOrderSummary() {
+    const subtotalEl = document.getElementById("order-subtotal");
+    const totalEl = document.getElementById("order-total");
+    const q = parseInt(qtyInput.value) || 1;
+    const subtotal = productPrice * q;
+    if (subtotalEl) subtotalEl.textContent = "₹" + subtotal.toFixed(2);
+    if (totalEl) totalEl.textContent = "₹" + subtotal.toFixed(2);
+  }
+
+  // Add pulse animation to buttons
+  function pulse(el) {
+    el.classList.remove("iconPulse");
+    void el.offsetWidth; // force reflow
+    el.classList.add("iconPulse");
+  }
+
+  updateOrderSummary();
+});
+</script>
+
 
     
     <!-- Action Buttons -->
@@ -300,8 +372,13 @@ document.addEventListener("DOMContentLoaded", function () {
 <script src="../favourite/favourite.js"></script>
 
                             <form action="Payment/payment.php" method="POST" id="order-form">
-    <input type="hidden" name="product_id" value="<?= htmlspecialchars($product_id) ?>
-">
+    <?php if (!empty($product['product_id'])): ?>
+        <!-- Normal Product -->
+        <input type="hidden" name="product_id" value="<?= htmlspecialchars($product['product_id']) ?>">
+    <?php elseif (!empty($product['offer_product_id'])): ?>
+        <!-- Offer Product -->
+        <input type="hidden" name="offer_product_id" value="<?= htmlspecialchars($product['offer_product_id']) ?>">
+    <?php endif; ?>
     <input type="hidden" name="quantity" id="hidden-quantity" value="1">
 </form>
 
@@ -319,14 +396,20 @@ document.addEventListener("DOMContentLoaded", function () {
                     </div>
                 </div>
                 <script>
-    buyNowBtn = document.getElementById('place-order');
+    const buyNowBtn = document.getElementById('place-order');
     const orderForm = document.getElementById('order-form');
+    const quantityInput = document.getElementById('quantity');
+    const hiddenQuantityInput = document.getElementById('hidden-quantity');
 
-    buyNowBtn.addEventListener('click', function() {
-        // Optional: update quantity if needed
-        // document.getElementById('hidden-quantity').value = desiredQuantity;
-        orderForm.submit(); // Submit the form
-    });
+    if (buyNowBtn && orderForm) {
+        buyNowBtn.addEventListener('click', function() {
+            // Update quantity from visible input before submitting
+            if (quantityInput && hiddenQuantityInput) {
+                hiddenQuantityInput.value = quantityInput.value;
+            }
+            orderForm.submit(); // Submit the form
+        });
+    }
 </script>
                <!-- Product Description -->
 <div class="border-t border-gray-200 p-6">
@@ -338,7 +421,7 @@ document.addEventListener("DOMContentLoaded", function () {
 <hr>
             
             <!-- Order Summary -->
-            <div class="lg:w-1/3">
+            <div class="lg:w-1/3 lg:ml-auto">
                 <div class="bg-white rounded-lg shadow-md p-6 sticky top-4">
                     <h3 class="font-bold text-lg mb-4 text-gray-800">Order Summary</h3>
                     
@@ -389,7 +472,7 @@ $total = $product['price'] * $quantity;
         <input type="hidden" name="quantity" id="summary-hidden-quantity" value="1">
 
         <!-- Submit Button -->
-        <button type="button" id="summary-place-order"
+        <button type="submit" id="summary-place-order"
             class="w-full bg-green-600 hover:bg-green-700 text-white py-3 rounded-md font-semibold transition">
             Place Order
         </button>
@@ -404,28 +487,40 @@ $total = $product['price'] * $quantity;
 <script>
 const visibleInput = document.getElementById('quantity');
 const summaryHiddenInput = document.getElementById('summary-hidden-quantity');
+
 const summaryOrderForm = document.getElementById('summary-order-form');
 const summaryPlaceOrderBtn = document.getElementById('summary-place-order');
 
-// Sync quantity input with hidden input
-visibleInput.addEventListener('input', function() {
-    summaryHiddenInput.value = visibleInput.value;
-});
 
-// Place Order button acts like Buy Now
-if (summaryPlaceOrderBtn) {
-    summaryPlaceOrderBtn.addEventListener('click', function() {
-        // Sync quantity before submit
-        summaryHiddenInput.value = visibleInput.value;
-        summaryOrderForm.submit();
+// Sync quantity input with both hidden inputs
+if (visibleInput) {
+    visibleInput.addEventListener('input', function() {
+        if (summaryHiddenInput) {
+            summaryHiddenInput.value = visibleInput.value;
+        }
+        if (hiddenQuantityInput) {
+            hiddenQuantityInput.value = visibleInput.value;
+        }
+        updateOrderSummary(); // Update order summary display
     });
 }
 
-    
-// Optional: sync hidden input right before form submit (extra safety)
-document.getElementById('order-form').addEventListener('submit', function() {
-    hiddenInput.value = visibleInput.value;
-});
+// Place Order button acts like Buy Now
+// Ensure quantity sync on submit
+if (summaryOrderForm) {
+    summaryOrderForm.addEventListener('submit', function() {
+        if (visibleInput && summaryHiddenInput) {
+            summaryHiddenInput.value = visibleInput.value;
+        }
+    });
+}
+
+// Sync hidden input right before form submit (extra safety)
+if (orderForm && hiddenQuantityInput && visibleInput) {
+    orderForm.addEventListener('submit', function() {
+        hiddenQuantityInput.value = visibleInput.value;
+    });
+}
 </script>
                     
                     <div class="mt-4 text-xs text-gray-500">
@@ -460,9 +555,8 @@ document.getElementById('order-form').addEventListener('submit', function() {
         const cartTotal = document.getElementById('cart-total');
         const checkoutBtn = document.getElementById('checkout-btn');
         
-        const quantityInput = document.getElementById('quantity');
         const addToCartBtn = document.getElementById('add-to-cart');
-        const buyNowBtn = document.getElementById('buy-now');
+        
         const placeOrderBtn = document.getElementById('place-order');
         
         const orderSubtotal = document.getElementById('order-subtotal');
@@ -482,28 +576,75 @@ document.getElementById('order-form').addEventListener('submit', function() {
         
 // Update quantity
 function updateQuantity(change) {
-    let newValue = parseInt(quantityInput.value) + change;
+    const quantityInput = document.getElementById('quantity');
+    const hiddenQuantityInput = document.getElementById('hidden-quantity');
+    const summaryHiddenInput = document.getElementById('summary-hidden-quantity');
+    const maxStock = <?php echo intval($product['stock']); ?>; // max stock from PHP
+    
+    if (!quantityInput) return;
+    
+    let current = parseInt(quantityInput.value);
+    let newValue = current + change;
+
     if (newValue < 1) newValue = 1;
+    // Only cap to stock when stock is a positive number
+    if (maxStock > 0 && newValue > maxStock) newValue = maxStock;
+
     quantityInput.value = newValue;
-    hiddenInput.value = newValue; // sync with form
+    
+    // Sync with both hidden inputs
+    if (hiddenQuantityInput) {
+        hiddenQuantityInput.value = newValue;
+    }
+    if (summaryHiddenInput) {
+        summaryHiddenInput.value = newValue;
+    }
+    
     updateOrderSummary();
 }
 
 function updateOrderSummary() {
-    const quantity = parseInt(quantityInput.value);
+    const quantityInput = document.getElementById('quantity');
+    const orderSubtotal = document.getElementById('order-subtotal');
+    const orderTotal = document.getElementById('order-total');
+    
+    if (!quantityInput || !orderSubtotal || !orderTotal) return;
+    
+    const quantity = parseInt(quantityInput.value) || 1;
     const subtotal = productPrice * quantity;
 
     // Update DOM
     orderSubtotal.textContent = "₹" + subtotal.toFixed(2);
     orderTotal.textContent = "₹" + subtotal.toFixed(2);
-
-    // Sync hidden input
-    hiddenInput.value = quantity;
 }
 
 // Run once on page load
 document.addEventListener("DOMContentLoaded", () => {
     updateOrderSummary();
+    // Attach pulse animation on icon click and keep quantity in sync
+    const plusBtn = document.getElementById('qty-plus');
+    const minusBtn = document.getElementById('qty-minus');
+    const plusIcon = document.getElementById('qty-plus-icon');
+    const minusIcon = document.getElementById('qty-minus-icon');
+
+    function pulse(el) {
+        if (!el) return;
+        el.classList.remove('iconPulse');
+        // Force reflow to restart animation
+        void el.offsetWidth;
+        el.classList.add('iconPulse');
+    }
+
+    if (plusBtn) {
+        plusBtn.addEventListener('click', () => {
+            pulse(plusIcon);
+        });
+    }
+    if (minusBtn) {
+        minusBtn.addEventListener('click', () => {
+            pulse(minusIcon);
+        });
+    }
 });
         
         // Add to cart
@@ -581,18 +722,6 @@ document.addEventListener("DOMContentLoaded", () => {
         
     
 
-        function updateQuantity(change) {
-    const maxStock = <?php echo intval($product['stock']); ?>; // max stock from PHP
-    let current = parseInt(quantityInput.value);
-    let newValue = current + change;
-
-    if (newValue < 1) newValue = 1;
-    if (newValue > maxStock) newValue = maxStock; // prevent exceeding stock
-
-    quantityInput.value = newValue;
-    hiddenInput.value = newValue; // sync with form
-    updateOrderSummary();
-}
 
     </script>
 </body>

@@ -295,7 +295,83 @@ switch(strtolower($status)) {
         ?>
         <div class="order-card <?= $card_class ?> custom-order-card <?= $file_type_class ?>">
             <div class="custom-order-image <?= $file_type_class ?>" data-file-type="<?= $file_type_label ?>">
-                <i class="<?= $icon_class ?>"></i>
+                <?php
+                    // Display hardcoded icons for each file type
+                    switch ($file_extension) {
+                        case 'pdf':
+                            echo '<svg class="file-icon-svg" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                                    <rect width="100" height="100" fill="#f5f5f5" rx="8"/>
+                                    <rect width="100" height="60" fill="#dc3545" rx="8"/>
+                                    <text x="50" y="35" font-size="24" font-weight="bold" fill="white" text-anchor="middle" dominant-baseline="middle">PDF</text>
+                                    <text x="50" y="80" font-size="12" fill="#666" text-anchor="middle">Document</text>
+                                  </svg>';
+                            break;
+                        case 'doc':
+                        case 'docx':
+                            echo '<svg class="file-icon-svg" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                                    <rect width="100" height="100" fill="#f5f5f5" rx="8"/>
+                                    <rect width="100" height="60" fill="#0d6efd" rx="8"/>
+                                    <text x="50" y="35" font-size="20" font-weight="bold" fill="white" text-anchor="middle" dominant-baseline="middle">DOC</text>
+                                    <text x="50" y="80" font-size="12" fill="#666" text-anchor="middle">Word</text>
+                                  </svg>';
+                            break;
+                        case 'txt':
+                            echo '<svg class="file-icon-svg" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                                    <rect width="100" height="100" fill="#f5f5f5" rx="8"/>
+                                    <rect width="100" height="60" fill="#6c757d" rx="8"/>
+                                    <text x="50" y="35" font-size="18" font-weight="bold" fill="white" text-anchor="middle" dominant-baseline="middle">TXT</text>
+                                    <text x="50" y="80" font-size="12" fill="#666" text-anchor="middle">Text</text>
+                                  </svg>';
+                            break;
+                        case 'rtf':
+                            echo '<svg class="file-icon-svg" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                                    <rect width="100" height="100" fill="#f5f5f5" rx="8"/>
+                                    <rect width="100" height="60" fill="#8b5cf6" rx="8"/>
+                                    <text x="50" y="35" font-size="20" font-weight="bold" fill="white" text-anchor="middle" dominant-baseline="middle">RTF</text>
+                                    <text x="50" y="80" font-size="12" fill="#666" text-anchor="middle">Rich Text</text>
+                                  </svg>';
+                            break;
+                        case 'xls':
+                        case 'xlsx':
+                            echo '<svg class="file-icon-svg" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                                    <rect width="100" height="100" fill="#f5f5f5" rx="8"/>
+                                    <rect width="100" height="60" fill="#198754" rx="8"/>
+                                    <text x="50" y="35" font-size="18" font-weight="bold" fill="white" text-anchor="middle" dominant-baseline="middle">XLS</text>
+                                    <text x="50" y="80" font-size="12" fill="#666" text-anchor="middle">Excel</text>
+                                  </svg>';
+                            break;
+                        case 'ppt':
+                        case 'pptx':
+                            echo '<svg class="file-icon-svg" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                                    <rect width="100" height="100" fill="#f5f5f5" rx="8"/>
+                                    <rect width="100" height="60" fill="#fd7e14" rx="8"/>
+                                    <text x="50" y="35" font-size="18" font-weight="bold" fill="white" text-anchor="middle" dominant-baseline="middle">PPT</text>
+                                    <text x="50" y="80" font-size="12" fill="#666" text-anchor="middle">PowerPoint</text>
+                                  </svg>';
+                            break;
+                        case 'jpg':
+                        case 'jpeg':
+                        case 'png':
+                        case 'gif':
+                        case 'bmp':
+                            echo '<svg class="file-icon-svg" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                                    <rect width="100" height="100" fill="#f5f5f5" rx="8"/>
+                                    <rect width="100" height="60" fill="#20c997" rx="8"/>
+                                    <circle cx="35" cy="25" r="6" fill="white"/>
+                                    <path d="M 15 40 L 30 25 L 45 35 L 60 20 L 75 35 L 80 30 L 80 50" stroke="white" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+                                    <text x="50" y="80" font-size="12" fill="#666" text-anchor="middle">Image</text>
+                                  </svg>';
+                            break;
+                        default:
+                            echo '<svg class="file-icon-svg" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                                    <rect width="100" height="100" fill="#f5f5f5" rx="8"/>
+                                    <rect width="100" height="60" fill="#999" rx="8"/>
+                                    <path d="M 35 25 L 35 45 L 65 45 L 65 25 M 40 35 L 60 35" stroke="white" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+                                    <text x="50" y="80" font-size="12" fill="#666" text-anchor="middle">File</text>
+                                  </svg>';
+                            break;
+                    }
+                ?>
             </div>
             <div class="custom-order-details">
                 <h3 class="custom-product-name">
